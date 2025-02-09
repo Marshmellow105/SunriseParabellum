@@ -307,6 +307,8 @@
 	long_ranged = TRUE
 	var/icon_state_off = "entertainment_blank"
 	var/icon_state_on = "entertainment"
+	/// Virtual radio inside of the entertainment monitor to broadcast audio
+	var/obj/item/radio/entertainment/speakers/speakers
 
 MAPPING_DIRECTIONAL_HELPERS(/obj/machinery/computer/security/telescreen/entertainment, 32)
 

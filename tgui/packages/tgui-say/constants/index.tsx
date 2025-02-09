@@ -90,6 +90,10 @@ export const RADIO_PREFIXES = {
     id: 'supply',
     label: 'Supp',
   },
+  ':k ': {
+    id: 'entertainment',
+    label: 'Ent',
+  },
   ':v ': {
     id: 'service',
     label: 'Svc',

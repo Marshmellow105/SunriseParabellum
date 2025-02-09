@@ -24,7 +24,7 @@ GLOBAL_LIST_INIT(department_radio_keys, list(
 
 	// Misc
 	RADIO_KEY_AI_PRIVATE = RADIO_CHANNEL_AI_PRIVATE, // AI Upload channel
-
+	RADIO_KEY_ENTERTAINMENT = RADIO_CHANNEL_ENTERTAINMENT, // Entertainment monitors
 
 	//kinda localization -- rastaf0
 	//same keys as above, but on russian keyboard layout.
@@ -50,6 +50,7 @@ GLOBAL_LIST_INIT(department_radio_keys, list(
 
 	// Misc
 	"щ" = RADIO_CHANNEL_AI_PRIVATE
+	"з" = RADIO_CHANNEL_ENTERTAINMENT
 ))
 
 /mob/living/proc/Ellipsis(original_msg, chance = 50, keep_words)

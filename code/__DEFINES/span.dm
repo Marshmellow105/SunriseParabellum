@@ -69,6 +69,7 @@
 #define span_emote(str) ("<span class='emote'>" + (str) + "</span>")
 #define span_error(str) ("<span class='error'>" + (str) + "</span>")
 #define span_gamedeadsay(str) ("<span class='game deadsay'>" + (str) + "</span>")
+#define span_enteradio(str) ("<span class='enteradio'>" + str + "</span>")
 #define span_gamesay(str) ("<span class='game say'>" + (str) + "</span>")
 #define span_ghostalert(str) ("<span class='ghostalert'>" + (str) + "</span>")
 #define span_good(str) ("<span class='good'>" + (str) + "</span>")

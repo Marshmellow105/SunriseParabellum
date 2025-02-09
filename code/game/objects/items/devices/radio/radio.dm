@@ -609,4 +609,72 @@
 	. = ..()
 	set_listening(FALSE)
 
+// RADIOS USED BY BROADCASTING
+/obj/item/radio/entertainment
+	desc = "You should not hold this."
+	canhear_range = 7
+	freerange = TRUE
+	freqlock = RADIO_FREQENCY_LOCKED
+	radio_noise = FALSE
+
+/obj/item/radio/entertainment/Initialize(mapload)
+	. = ..()
+	set_frequency(FREQ_ENTERTAINMENT)
+
+/obj/item/radio/entertainment/speakers // Used inside of the entertainment monitors, not to be used as a actual item
+	should_be_listening = TRUE
+	should_be_broadcasting = FALSE
+
+/obj/item/radio/entertainment/speakers/Initialize(mapload)
+	. = ..()
+	set_broadcasting(FALSE)
+	set_listening(TRUE)
+	wires?.cut(WIRE_TX)
+
+/obj/item/radio/entertainment/speakers/on_receive_message(list/data)
+	. = ..()
+	/// Muffled speech that plays when something is heard on entertainment frequency
+	var/list/muffled_speech = list(
+		'sound/effects/muffspeech/muffspeech1.ogg',
+		'sound/effects/muffspeech/muffspeech2.ogg',
+		'sound/effects/muffspeech/muffspeech3.ogg',
+		'sound/effects/muffspeech/muffspeech4.ogg',
+		'sound/effects/muffspeech/muffspeech5.ogg',
+		'sound/effects/muffspeech/muffspeech6.ogg',
+		'sound/effects/muffspeech/muffspeech7.ogg',
+		'sound/effects/muffspeech/muffspeech8.ogg',
+		'sound/effects/muffspeech/muffspeech9.ogg',
+	)
+
+	playsound(source = src, soundin = pick(muffled_speech), vol = 60, extrarange = -4, vary = TRUE, ignore_walls = FALSE)
+
+/obj/item/radio/entertainment/speakers/physical // Can be used as a physical item
+	name = "entertainment radio"
+	desc = "A stationary one-way radio permamently tuned into entertainment frequency."
+	icon_state = "radio"
+	inhand_icon_state = "radio"
+	worn_icon_state = "radio"
+	overlay_speaker_idle = "radio_s_idle"
+	overlay_speaker_active = "radio_s_active"
+	overlay_mic_idle = "radio_m_idle"
+	overlay_mic_active = "radio_m_active"
+
+/obj/item/radio/entertainment/microphone // Used inside of a broadcast camera, not to be used as a actual item
+	should_be_listening = FALSE
+	should_be_broadcasting = TRUE
+
+/obj/item/radio/entertainment/microphone/Initialize(mapload)
+	. = ..()
+	set_broadcasting(TRUE)
+	set_listening(FALSE)
+	wires?.cut(WIRE_RX)
+
+/obj/item/radio/entertainment/microphone/physical // Can be used as a physical item
+	name = "microphone"
+	desc = "No comments."
+	icon = 'icons/obj/service/broadcast.dmi'
+	icon_state = "microphone"
+	inhand_icon_state = "microphone"
+	canhear_range = 3
+
 #undef FREQ_LISTENING
