@@ -1,0 +1,12 @@
+{
+	"map_name": "Placeholder Station",
+	"map_link": "placeholderstation",
+	"map_path": "map_files/PlaceholderStation",
+	"map_file": "PlaceholderStation.dmm",
+	"shuttles": {
+		"emergency": "emergency_kilo",
+		"ferry": "ferry_kilo",
+		"cargo": "cargo_kilo",
+		"whiteship": "whiteship_meta"
+	}
+}
