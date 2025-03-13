@@ -1,0 +1,12 @@
+{
+	"map_name": "Gallipo Station",
+	"map_link": "gallipostation",
+	"map_path": "map_files/GallipoStation",
+	"map_file": "GallipoStation.dmm",
+	"shuttles": {
+		"cargo": "cargo_box",
+		"ferry": "ferry_kilo",
+		"whiteship": "whiteship_fland",
+		"emergency": "emergency_box"
+	}
+}
