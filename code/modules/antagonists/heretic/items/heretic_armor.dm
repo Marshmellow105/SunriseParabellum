@@ -7,7 +7,7 @@
 	desc = "A torn, dust-caked hood. Strange eyes line the inside."
 	flags_inv = HIDEMASK|HIDEEARS|HIDEEYES|HIDEFACE|HIDEHAIR|HIDEFACIALHAIR|HIDESNOUT
 	flags_cover = HEADCOVERSEYES | HEADCOVERSMOUTH
-	flash_protect = 2
+	flash_protect = FLASH_PROTECTION_WELDER
 
 /obj/item/clothing/head/hooded/cult_hoodie/eldritch/equipped(mob/user, slot)
 	..()
@@ -92,8 +92,8 @@
 	// slightly worse than normal cult robes
 	armor_type = /datum/armor/cultrobes_void
 	body_parts_covered = CHEST|GROIN|ARMS
-	pocket_storage_component_path = /datum/component/storage/concrete/pockets/void_cloak
 	qdel_hood = TRUE
+	pockets = FALSE
 
 
 /datum/armor/cultrobes_void
@@ -107,6 +107,7 @@
 
 /obj/item/clothing/suit/hooded/cultrobes/void/Initialize(mapload)
 	. = ..()
+	create_storage(storage_type = /datum/storage/pockets/void_cloak)
 	make_visible()
 
 /obj/item/clothing/suit/hooded/cultrobes/void/RemoveHood()

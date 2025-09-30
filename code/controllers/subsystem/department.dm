@@ -42,8 +42,8 @@ SUBSYSTEM_DEF(department)
 		EXP_TYPE_SCIENCE = 	SSdepartment.get_jobs_by_dept_id(DEPT_NAME_SCIENCE),
 		EXP_TYPE_SUPPLY = 	SSdepartment.get_jobs_by_dept_id(DEPT_NAME_CARGO),
 		EXP_TYPE_SECURITY = SSdepartment.get_jobs_by_dept_id(DEPT_NAME_SECURITY),
-		EXP_TYPE_SILICON = 	SSdepartment.get_jobs_by_dept_id(DEPT_NAME_SILICON),
-		EXP_TYPE_SERVICE = 	SSdepartment.get_jobs_by_dept_id(DEPT_NAME_CIVILIAN)
+		EXP_TYPE_SERVICE = SSdepartment.get_jobs_by_dept_id(DEPT_NAME_SERVICE),
+		EXP_TYPE_SILICON = 	SSdepartment.get_jobs_by_dept_id(DEPT_NAME_SILICON)
 	)
 
 	return SS_INIT_SUCCESS
@@ -230,7 +230,8 @@ SUBSYSTEM_DEF(department)
 				JOB_NAME_VIP,
 				JOB_NAME_CHAPLAIN,
 				JOB_NAME_CURATOR,
-				JOB_NAME_LAWYER)
+				JOB_NAME_LAWYER,
+				JOB_NAME_PRISONER)
 
 	pref_category_name = DEPT_NAME_CIVILIAN
 	pref_category_order = DEPT_PREF_ORDER_CIVILIAN

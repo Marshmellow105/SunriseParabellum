@@ -181,7 +181,7 @@
 	robust_searching = 1
 	var/can_infest_dead = FALSE
 
-/mob/living/simple_animal/hostile/asteroid/hivelordbrood/legion/Life()
+/mob/living/simple_animal/hostile/asteroid/hivelordbrood/legion/Life(delta_time = SSMOBS_DT, times_fired)
 	. = ..()
 	if(stat == DEAD || !isturf(loc))
 		return
@@ -276,7 +276,7 @@
 
 /obj/effect/mob_spawn/human/corpse/damaged/legioninfested/dwarf/equip(mob/living/carbon/human/H)
 	. = ..()
-	H.dna.add_mutation(DWARFISM)
+	H.dna.add_mutation(/datum/mutation/dwarfism)
 
 /obj/effect/mob_spawn/human/corpse/damaged/legioninfested/Initialize(mapload)
 	var/type = pick_weight(list("Miner" = 66, "Ashwalker" = 10, "Golem" = 10,JOB_NAME_CLOWN = 10, pick(list("Shadow", "YeOlde","Operative", "Cultist")) = 4))
@@ -352,7 +352,7 @@
 			shoes = /obj/item/clothing/shoes/laceup
 			head = /obj/item/clothing/head/helmet/knight
 			suit = /obj/item/clothing/suit/armor/riot/knight
-			back = /obj/item/shield/riot/buckler
+			back = /obj/item/shield/buckler
 			belt = /obj/item/nullrod/claymore
 			r_pocket = /obj/item/tank/internals/emergency_oxygen
 			mask = /obj/item/clothing/mask/breath

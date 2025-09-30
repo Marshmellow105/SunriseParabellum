@@ -36,10 +36,13 @@
 		user.update_inv_hands()
 		return 1
 
-/datum/action/changeling/weapon/sting_action(mob/living/user)
+/datum/action/changeling/weapon/sting_action(mob/living/carbon/user)
 	var/obj/item/held = user.get_active_held_item()
 	if(held && !user.dropItemToGround(held))
 		to_chat(user, span_warning("[held] is stuck to your hand, you cannot grow a [weapon_name_simple] over it!"))
+		return
+	if(!istype(user))
+		to_chat(user, span_warning("You can't do that in this state!"))
 		return
 	..()
 	var/limb_regen = 0
@@ -252,7 +255,7 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/item/gun/magic/tentacle)
 /obj/item/gun/magic/tentacle/shoot_with_empty_chamber(mob/living/user as mob|obj)
 	to_chat(user, span_warning("The [name] is not ready yet."))
 
-/obj/item/gun/magic/tentacle/process_fire(atom/target, mob/living/user, message, params, zone_override, bonus_spread)
+/obj/item/gun/magic/tentacle/fire_shot_at(mob/living/user, atom/target, message, params, zone_override, aimed)
 	var/obj/projectile/tentacle/tentacle_shot = chambered.BB //Gets the actual projectile we will fire
 	tentacle_shot.fire_modifiers = params2list(params)
 	. = ..()
@@ -391,7 +394,7 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/item/gun/magic/tentacle)
 	helmet_type = /obj/item/clothing/head/helmet/space/changeling
 	suit_name_simple = "flesh shell"
 	helmet_name_simple = "space helmet"
-	recharge_slowdown = 0.5
+	recharge_slowdown = 0.25
 	blood_on_castoff = 1
 
 /obj/item/clothing/suit/space/changeling
@@ -482,7 +485,7 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/item/gun/magic/tentacle)
 	chemical_cost = 20
 	dna_cost = 2
 	req_human = 1
-	recharge_slowdown = 0.25
+	recharge_slowdown = 0.125
 
 	suit_type = /obj/item/clothing/suit/armor/changeling
 	helmet_type = /obj/item/clothing/head/helmet/changeling
@@ -500,9 +503,9 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/item/gun/magic/tentacle)
 	flags_inv = HIDEJUMPSUIT
 	cold_protection = 0
 	heat_protection = 0
-	blocks_shove_knockdown = TRUE
+	clothing_flags = BLOCKS_SHOVE_KNOCKDOWN
 	slowdown = 0
-
+	clothing_flags = THICKMATERIAL
 
 /datum/armor/armor_changeling
 	melee = 40

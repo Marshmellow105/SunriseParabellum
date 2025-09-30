@@ -131,7 +131,13 @@ CREATION_TEST_IGNORE_SELF(/turf)
 			return
 		air_update_turf(TRUE, FALSE)
 
+/**
+  * Turf Initialize
+  *
+  * Doesn't call parent, see [/atom/proc/Initialize]
+  */
 /turf/Initialize(mapload)
+	SHOULD_CALL_PARENT(FALSE)
 	if(flags_1 & INITIALIZED_1)
 		stack_trace("Warning: [src]([type]) initialized multiple times!")
 	flags_1 |= INITIALIZED_1
@@ -195,8 +201,6 @@ CREATION_TEST_IGNORE_SELF(/turf)
 
 		custom_materials = null //Null the list to prepare for applying the materials properly
 		set_custom_materials(temp_list)
-
-	ComponentInitialize()
 
 	if(uses_integrity)
 		atom_integrity = max_integrity
@@ -314,6 +318,20 @@ CREATION_TEST_IGNORE_SELF(/turf)
 			return TRUE
 	return FALSE
 
+/**
+ * Checks whether the specified turf is blocked by something dense inside it, but ignores anything with the climbable trait
+ *
+ * Works similar to is_blocked_turf(), but ignores climbables and has less options. Primarily added for jaunting checks
+ */
+/turf/proc/is_blocked_turf_ignore_climbable()
+	if(density)
+		return TRUE
+
+	for(var/atom/movable/atom_content as anything in contents)
+		if(atom_content.density && !(atom_content.flags_1 & ON_BORDER_1) && !HAS_TRAIT(atom_content, TRAIT_CLIMBABLE))
+			return TRUE
+	return FALSE
+
 /proc/is_anchored_dense_turf(turf/T) //like the older version of the above, fails only if also anchored
 	if(T.density)
 		return 1
@@ -346,19 +364,21 @@ CREATION_TEST_IGNORE_SELF(/turf)
 	if(canPassSelf || (mover.movement_type & PHASING))
 		for(var/atom/movable/thing as anything in contents)
 			if(QDELETED(mover))
-				return FALSE		//We were deleted, do not attempt to proceed with movement.
+				return FALSE //We were deleted, do not attempt to proceed with movement.
 			if(thing == mover || thing == mover.loc) // Multi tile objects and moving out of other objects
 				continue
 			if(!thing.Cross(mover))
-				if(QDELETED(mover))		//Mover deleted from Cross/CanPass, do not proceed.
+				if(QDELETED(mover)) //Mover deleted from Cross/CanPass, do not proceed.
 					return FALSE
 				if((mover.movement_type & PHASING))
 					mover.Bump(thing)
+					if(QDELETED(mover)) //deleted from Bump()
+						return FALSE
 					continue
 				else
 					if(!firstbump || ((thing.layer > firstbump.layer || thing.flags_1 & ON_BORDER_1) && !(firstbump.flags_1 & ON_BORDER_1)))
 						firstbump = thing
-	if(QDELETED(mover))					//Mover deleted from Cross/CanPass/Bump, do not proceed.
+	if(QDELETED(mover)) //Mover deleted from Cross/CanPass/Bump, do not proceed.
 		return FALSE
 	if(!canPassSelf)	//Even if mover is unstoppable they need to bump us.
 		firstbump = src
@@ -432,23 +452,6 @@ CREATION_TEST_IGNORE_SELF(/turf)
 
 /turf/proc/Bless()
 	new /obj/effect/blessing(src)
-
-/turf/storage_contents_dump_act(datum/component/storage/src_object, mob/user)
-	. = ..()
-	if(.)
-		return
-	if(length(src_object.contents()))
-		balloon_alert(usr, "You dump out the contents.")
-		if(!do_after(usr,20,target=src_object.parent))
-			return FALSE
-
-	var/list/things = src_object.contents()
-	var/datum/progressbar/progress = new(user, things.len, src)
-	while (do_after(usr, 10, src, progress = FALSE, extra_checks = CALLBACK(src_object, TYPE_PROC_REF(/datum/component/storage, mass_remove_from_storage), src, things, progress)))
-		stoplag(1)
-	progress.end_progress()
-
-	return TRUE
 
 //////////////////////////////
 //Distance procs
@@ -668,17 +671,3 @@ CREATION_TEST_IGNORE_SELF(/turf)
 		if(!ismopable(movable_content))
 			continue
 		movable_content.wash(clean_types)
-
-/**
- * Checks whether the specified turf is blocked by something dense inside it, but ignores anything with the climbable trait
- *
- * Works similar to is_blocked_turf(), but ignores climbables and has less options. Primarily added for jaunting checks
- */
-/turf/proc/is_blocked_turf_ignore_climbable()
-	if(density)
-		return TRUE
-
-	for(var/atom/movable/atom_content as anything in contents)
-		if(atom_content.density && !(atom_content.flags_1 & ON_BORDER_1) && !HAS_TRAIT(atom_content, TRAIT_CLIMBABLE))
-			return TRUE
-	return FALSE

@@ -1,6 +1,7 @@
 /obj/item/melee/baton
 	name = "stun baton"
-	desc = "A stun baton for incapacitating people with. Left click to stun, right click to baton shove."
+	desc = "A stun baton for incapacitating people with."
+	desc_controls = "Left click to stun, right click to baton shove."
 
 	icon_state = "stunbaton"
 	item_state = "baton"
@@ -22,7 +23,7 @@
 
 	var/obj/item/stock_parts/cell/cell
 	var/preload_cell_type //if not empty the baton starts with this type of cell
-	var/cell_hit_cost = 1000
+	var/cell_hit_cost = 1 KILOWATT
 	var/can_remove_cell = TRUE
 
 	var/turned_on = FALSE
@@ -53,6 +54,9 @@
 
 /obj/item/melee/baton/Initialize(mapload)
 	. = ..()
+	// Adding an extra break for the sake of presentation
+	if(stamina_loss_amt != 0)
+		offensive_notes = "\nVarious interviewed security forces report being able to beat criminals into exhaustion with only <span class='warning'>[round(100 / stamina_loss_amt, 0.1)] hit\s!</span>"
 	if(preload_cell_type)
 		if(!ispath(preload_cell_type,/obj/item/stock_parts/cell))
 			log_mapping("[src] at [AREACOORD(src)] had an invalid preload_cell_type: [preload_cell_type].")
@@ -193,9 +197,9 @@
 			M.visible_message(span_warning("[user] has prodded [M] with [src]. Luckily it was off."), \
 							span_warning("[user] has prodded you with [src]. Luckily it was off"))
 	else
+		. = ..()
 		if(turned_on)
 			baton_effect(M, user, params)
-		return ..()
 
 /obj/item/melee/baton/proc/baton_effect(mob/living/target, mob/living/user, params)
 	if(obj_flags & OBJ_EMPED)
@@ -284,7 +288,7 @@
 	force = 3
 	throwforce = 5
 	stun_time = 4 SECONDS
-	cell_hit_cost = 2000
+	cell_hit_cost = 2 KILOWATT
 	throw_stun_chance = 10
 	slot_flags = ITEM_SLOT_BACK
 	var/obj/item/assembly/igniter/sparkler = 0

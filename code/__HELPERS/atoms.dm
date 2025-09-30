@@ -20,6 +20,17 @@
 			assembled += A
 	return assembled
 
+///identical to get_all_contents but returns a list of atoms of the type passed in the argument.
+/atom/proc/GetAllContentsType(type)
+	var/list/processing_list = list(src)
+	. = list()
+	while(length(processing_list))
+		var/atom/checked_atom = processing_list[1]
+		processing_list.Cut(1, 2)
+		processing_list += checked_atom.contents
+		if(istype(checked_atom, type))
+			. += checked_atom
+
 /// Gets all contents of contents and returns them all in a list, ignoring a chosen typecache.
 //Update GetAllContentsIgnoring to get_all_contents_ignoring so it easier to read in
 /atom/proc/GetAllContentsIgnoring(list/ignore_typecache)
@@ -343,3 +354,9 @@
 		"x" = icon_width > world.icon_size && pixel_x != 0 ? (icon_width - world.icon_size) * 0.5 : 0,
 		"y" = icon_height > world.icon_size && pixel_y != 0 ? (icon_height - world.icon_size) * 0.5 : 0,
 	)
+
+#define set_base_luminosity(target, new_value)\
+if (UNLINT(target.base_luminosity != new_value)) {\
+	UNLINT(target.base_luminosity = new_value);\
+	target.update_luminosity();\
+}

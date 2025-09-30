@@ -50,7 +50,7 @@
 	if(!is_currently_leanable) //Is the object currently able to be leaned on?
 		return FALSE
 
-	leaner.apply_status_effect(STATUS_EFFECT_LEANING, source, leaning_offset)
+	leaner.apply_status_effect(/datum/status_effect/leaning, source, leaning_offset)
 	return TRUE
 
 /datum/component/leanable/proc/on_density_change()
@@ -88,7 +88,7 @@
 		COMSIG_MOB_CLIENT_MOVED,
 		COMSIG_HUMAN_DISARM_HIT,
 		COMSIG_MOVABLE_PULLED,
-		COMSIG_PARENT_QDELETING,
+		COMSIG_QDELETING,
 		COMSIG_LIVING_RESIST, // Pressing B!
 		COMSIG_LIVING_MINOR_SHOCK, //If we are hit by a stunbaton
 		COMSIG_LIVING_RESTING_UPDATED //If we are downed
@@ -106,7 +106,7 @@
 		COMSIG_HUMAN_DISARM_HIT,
 		COMSIG_MOVABLE_PULLED,
 		COMSIG_ATOM_TELEPORT_ACT,
-		COMSIG_PARENT_QDELETING,
+		COMSIG_QDELETING,
 		COMSIG_LIVING_RESIST,
 		COMSIG_LIVING_MINOR_SHOCK,
 		COMSIG_LIVING_RESTING_UPDATED

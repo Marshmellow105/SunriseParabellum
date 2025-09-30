@@ -10,10 +10,9 @@
 	var/title = "book"
 	item_flags = ISWEAPON
 
-/obj/item/storage/book/ComponentInitialize()
+/obj/item/storage/book/Initialize(mapload)
 	. = ..()
-	var/datum/component/storage/STR = GetComponent(/datum/component/storage)
-	STR.max_items = 1
+	atom_storage.max_slots = 1
 
 /obj/item/storage/book/attack_self(mob/user)
 	to_chat(user, span_notice("The pages of [title] have been cut out!"))
@@ -36,11 +35,12 @@
 	var/deity_name = "Christ"
 	force_string = "holy"
 
-/obj/item/storage/book/bible/ComponentInitialize()
+/obj/item/storage/book/bible/Initialize(mapload)
 	. = ..()
 	AddComponent(/datum/component/anti_magic, \
-	_source = src, \
-	antimagic_flags = (MAGIC_RESISTANCE|MAGIC_RESISTANCE_HOLY))
+		_source = src, \
+		antimagic_flags = (MAGIC_RESISTANCE|MAGIC_RESISTANCE_HOLY) \
+	)
 
 /obj/item/storage/book/bible/suicide_act(mob/living/user)
 	user.visible_message(span_suicide("[user] is offering [user.p_them()]self to [deity_name]! It looks like [user.p_theyre()] trying to commit suicide!"))
@@ -57,7 +57,7 @@
 			if(icon_state == "honk1" || icon_state == "honk2")
 				var/mob/living/carbon/C = H
 				if(C.has_dna())
-					C.dna.add_mutation(CLOWNMUT)
+					C.dna.add_mutation(/datum/mutation/clumsy)
 				C.equip_to_slot_or_del(new /obj/item/clothing/mask/gas/clown_hat(C), ITEM_SLOT_MASK)
 			src.update_icon()
 			return
@@ -116,7 +116,7 @@
 		if(choice == "Clown Bible" || choice == "Banana Bible")
 			var/mob/living/carbon/C = M
 			if(C.has_dna())
-				C.dna.add_mutation(CLOWNMUT)
+				C.dna.add_mutation(/datum/mutation/clumsy)
 			C.equip_to_slot_or_del(new /obj/item/clothing/mask/gas/clown_hat(C), ITEM_SLOT_MASK)
 		to_chat(M, "[src] is now skinned as '[choice].'")
 		src.update_icon()
@@ -227,7 +227,7 @@
 			B.icon_state = icon_state
 			B.item_state = item_state
 
-	else if(istype(A, /obj/item/soulstone) && !iscultist(user))
+	else if(istype(A, /obj/item/soulstone) && !IS_CULTIST(user))
 		var/obj/item/soulstone/SS = A
 		if(SS.theme == THEME_HOLY)
 			return
@@ -241,8 +241,8 @@
 			for(var/mob/M in SS.contents)
 				if(M.mind)
 					SS.icon_state = "purified_soulstone2"
-					if(iscultist(M))
-						SSticker.mode.remove_cultist(M.mind, FALSE, FALSE)
+					if(IS_CULTIST(M))
+						M.mind.remove_antag_datum(/datum/antagonist/cult)
 			for(var/mob/living/simple_animal/shade/EX in SS)
 				EX.icon_state = "ghost1"
 				EX.name = "Purified [initial(EX.name)]"

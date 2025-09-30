@@ -25,6 +25,7 @@
 	/turf/open/lava))
 	var/slippery_foam = TRUE
 
+
 /obj/effect/particle_effect/foam/firefighting
 	name = "firefighting foam"
 	lifetime = 20 //doesn't last as long as normal foam
@@ -32,8 +33,8 @@
 	slippery_foam = FALSE
 	var/absorbed_plasma = 0
 
-/obj/effect/particle_effect/foam/firefighting/ComponentInitialize()
-	..()
+/obj/effect/particle_effect/foam/firefighting/Initialize(mapload)
+	. = ..()
 	RemoveElement(/datum/element/atmos_sensitive)
 
 /obj/effect/particle_effect/foam/firefighting/process()
@@ -41,7 +42,7 @@
 
 	var/turf/open/T = get_turf(src)
 	var/obj/effect/hotspot/hotspot = (locate(/obj/effect/hotspot) in T)
-	if(hotspot && istype(T) && T.air)
+	if(hotspot && T.air)
 		qdel(hotspot)
 		var/datum/gas_mixture/G = T.air
 		var/plas_amt = min(30,GET_MOLES(/datum/gas/plasma, G)) //Absorb some plasma
@@ -86,7 +87,7 @@
 	name = "resin foam"
 	metal = RESIN_FOAM
 
-/obj/effect/particle_effect/foam/metal/chainreact_resin
+/obj/effect/particle_effect/foam/metal/resin/chainreact
 	name = "self-destruct resin foam"
 	metal = RESIN_FOAM_CHAINREACT
 	lifetime = 20
@@ -100,6 +101,7 @@
 	slippery_foam = FALSE
 
 /obj/effect/particle_effect/foam/dissipating/Initialize(mapload)
+	. = ..()
 	flick("atmos_resin_chainreact_dissolving", src)
 	QDEL_IN(src, 6)
 
@@ -113,8 +115,6 @@
 	START_PROCESSING(SSfastprocess, src)
 	playsound(src, 'sound/effects/bubbles2.ogg', 80, 1, -3)
 
-/obj/effect/particle_effect/foam/ComponentInitialize()
-	. = ..()
 	if(slippery_foam)
 		AddComponent(/datum/component/slippery, 100)
 
@@ -211,6 +211,10 @@
 
 /obj/effect/particle_effect/foam/should_atmos_process(datum/gas_mixture/air, exposed_temperature)
 	return exposed_temperature > 475
+
+/obj/effect/particle_effect/foam/metal/resin/should_atmos_process(datum/gas_mixture/air, exposed_temperature)
+	return FALSE
+
 
 /obj/effect/particle_effect/foam/atmos_expose(datum/gas_mixture/air, exposed_temperature)
 	if(prob(max(0, exposed_temperature - 475)))   //foam dissolves when heated

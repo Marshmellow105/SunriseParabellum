@@ -61,6 +61,7 @@
 #define span_deadsaybold(str) ("<span class='deadsay bold'>" + (str) + "</span>")
 #define span_deadsayitalicsbold(str) ("<span class='deadsay italics bold'>" + (str) + "</span>")
 #define span_deathmessage(str) ("<span class='death_message'>" + (str) + "</span>")
+#define span_prisonermessage(str) ("<span class='prisoner_message'>" + (str) + "</span>")
 #define span_deconversionmessage(str) ("<span class='deconversion_message'>" + (str) + "</span>")
 #define span_deconversionmessagebold(str) ("<span class='deconversion_message bold'>" + (str) + "</span>")
 #define span_deptradio(str) ("<span class='deptradio'>" + (str) + "</span>")
@@ -215,3 +216,7 @@
 #define span_warningholoparasite(str) ("<span class='warning holoparasite'>" + (str) + "</span>")
 #define span_warningitalics(str) ("<span class='warning italics'>" + (str) + "</span>")
 #define span_warningrobot(str) ("<span class='warning robot'>" + (str) + "</span>")
+
+// Spans that use embedded tgui components:
+// Sorted alphabetically
+#define span_tooltip(tip, main_text) ("<span data-component=\"Tooltip\" data-content=\"" + tip + "\" class=\"tooltip\">" + main_text + "</span>")
