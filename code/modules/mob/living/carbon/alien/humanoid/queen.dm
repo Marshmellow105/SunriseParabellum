@@ -15,7 +15,7 @@
 	var/alt_inhands_file = 'icons/mob/alienqueen.dmi'
 	var/game_end_timer
 
-/mob/living/carbon/alien/humanoid/royal/can_inject(mob/user, error_msg, target_zone, penetrate_thick = FALSE)
+/mob/living/carbon/alien/humanoid/royal/can_inject(mob/user, target_zone, injection_flags)
 	return FALSE
 
 /mob/living/carbon/alien/humanoid/royal/queen/proc/maidify()
@@ -90,11 +90,13 @@
 	SSshuttle.clearInfestation(src)
 	..()
 
-/mob/living/carbon/alien/humanoid/royal/queen/revive(full_heal = 0, admin_revive = 0)
-	if(..())
-		RegisterSignal(src, COMSIG_MOVABLE_Z_CHANGED, PROC_REF(set_countdown))
-		set_countdown()
-		SSshuttle.registerInfestation(src)
+/mob/living/carbon/alien/humanoid/royal/queen/revive(full_heal_flags = NONE, excess_healing = 0, force_grab_ghost = FALSE)
+	. = ..()
+	if(!.)
+		return
+	RegisterSignal(src, COMSIG_MOVABLE_Z_CHANGED, PROC_REF(set_countdown))
+	set_countdown()
+	SSshuttle.registerInfestation(src)
 
 /mob/living/carbon/alien/humanoid/royal/queen/Destroy()
 	UnregisterSignal(src, COMSIG_MOVABLE_Z_CHANGED)

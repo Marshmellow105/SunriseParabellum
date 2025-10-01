@@ -84,7 +84,7 @@
 		return
 	var/mob_nearby = FALSE
 	for(var/mob/living/M in viewers(2, get_turf(src)))
-		if(is_servant_of_ratvar(M))
+		if(IS_SERVANT_OF_RATVAR(M))
 			mob_nearby = TRUE
 			break
 	if(mob_nearby && !mobs_in_range)
@@ -95,7 +95,7 @@
 		sg_light.close()
 
 /obj/structure/destructible/clockwork/gear_base/stargazer/attackby(obj/item/I, mob/living/user, params)
-	if(user.a_intent != INTENT_HELP)
+	if(user.combat_mode)
 		. = ..()
 		return
 	if(!anchored)

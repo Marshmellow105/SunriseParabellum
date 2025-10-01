@@ -171,6 +171,38 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/machinery/portable_atmospherics/canister)
 		return TRUE
 	return ..()
 
+/obj/machinery/portable_atmospherics/canister/welder_act_secondary(mob/living/user, obj/item/I)
+	. = ..()
+	if(!I.tool_start_check(user, amount=1))
+		return TRUE
+	var/pressure = air_contents.return_pressure()
+	if(pressure > 300)
+		to_chat(user, "<span class='alert'>The pressure gauge on [src] indicates a high pressure inside... maybe you want to reconsider?</span>")
+		message_admins("[src] deconstructed by [ADMIN_LOOKUPFLW(user)]")
+		log_game("[src] deconstructed by [key_name(user)]")
+	to_chat(user, "<span class='notice'>You begin cutting [src] apart...</span>")
+	if(I.use_tool(src, user, 3 SECONDS, volume=50))
+		to_chat(user, "<span class='notice'>You cut [src] apart.</span>")
+		deconstruct(TRUE)
+	return TRUE
+
+/obj/machinery/portable_atmospherics/canister/welder_act(mob/living/user, obj/item/tool)
+	. = ..()
+	if(user.combat_mode)
+		return FALSE
+	if(atom_integrity >= max_integrity)
+		return TRUE
+	if(machine_stat & BROKEN)
+		return TRUE
+	if(!tool.tool_start_check(user, amount=1))
+		return TRUE
+	to_chat(user, "<span class='notice'>You begin repairing cracks in [src]...</span>")
+	while(tool.use_tool(src, user, 2.5 SECONDS, volume=40))
+		atom_integrity = min(atom_integrity + 25, max_integrity)
+		if(atom_integrity >= max_integrity)
+			to_chat(user, "<span class='notice'>You've finished repairing [src].</span>")
+			return TRUE
+		to_chat(user, "<span class='notice'>You repair some of the cracks in [src]...</span>")
 /obj/machinery/portable_atmospherics/canister/screwdriver_act(mob/living/user, obj/item/screwdriver)
 	if(default_deconstruction_screwdriver(user, icon_state, icon_state, screwdriver))
 		update_appearance()
@@ -234,14 +266,14 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/machinery/portable_atmospherics/canister)
 	else if(valve_open && holding)
 		user.investigate_log("started a transfer into [holding].", INVESTIGATE_ATMOS)
 
-/obj/machinery/portable_atmospherics/canister/process(seconds_per_tick)
+/obj/machinery/portable_atmospherics/canister/process(delta_time)
 	if(!shielding_powered)
 		return
 
 	var/our_pressure = air_contents.return_pressure()
 	var/our_temperature = air_contents.return_temperature()
 	var/energy_factor = round(log(10, max(our_pressure - pressure_limit, 1)) + log(10, max(our_temperature - temp_limit, 1)))
-	var/energy_consumed = energy_factor * 250 * seconds_per_tick
+	var/energy_consumed = energy_factor * 250 * delta_time
 
 	if(!energy_consumed)
 		return
@@ -515,90 +547,71 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/machinery/portable_atmospherics/canister)
 
 /obj/machinery/portable_atmospherics/canister/air
 	name = "air canister"
-	desc = "Pre-mixed air."
 	greyscale_config = /datum/greyscale_config/canister
 	greyscale_colors = "#c6c0b5"
 
 /obj/machinery/portable_atmospherics/canister/bz
 	name = "\improper BZ canister"
-	desc = "BZ, a powerful hallucinogenic nerve agent."
 	gas_type = /datum/gas/bz
 	greyscale_config = /datum/greyscale_config/canister/double_stripe
 	greyscale_colors = "#9b5d7f#d0d2a0"
 
 /obj/machinery/portable_atmospherics/canister/carbon_dioxide
 	name = "co2 canister"
-	desc = "Carbon dioxide. What the fuck is carbon dioxide?"
 	gas_type = /datum/gas/carbon_dioxide
 	greyscale_config = /datum/greyscale_config/canister
 	greyscale_colors = "#4e4c48"
 
 /obj/machinery/portable_atmospherics/canister/nitrogen
 	name = "n2 canister"
-	desc = "Nitrogen gas. Reportedly useful for something."
 	gas_type = /datum/gas/nitrogen
 	greyscale_config = /datum/greyscale_config/canister
 	greyscale_colors = "#d41010"
 
 /obj/machinery/portable_atmospherics/canister/nitrous_oxide
 	name = "n2o canister"
-	desc = "Nitrous oxide gas. Known to cause drowsiness."
 	gas_type = /datum/gas/nitrous_oxide
 	greyscale_config = /datum/greyscale_config/canister/double_stripe
 	greyscale_colors = "#c63e3b#f7d5d3"
 
-/obj/machinery/portable_atmospherics/canister/nitryl
-	name = "nitryl canister"
-	desc = "Nitryl gas. Feels great 'til the acid eats your lungs."
-	gas_type = /datum/gas/nitryl
+/obj/machinery/portable_atmospherics/canister/nitrium
+	name = "Nitrium canister"
+	gas_type = /datum/gas/nitrium
 	greyscale_config = /datum/greyscale_config/canister
 	greyscale_colors = "#7b4732"
 
 /obj/machinery/portable_atmospherics/canister/nob
 	name = "hyper-noblium canister"
-	desc = "Hyper-Noblium. More noble than all other gases."
 	gas_type = /datum/gas/hypernoblium
 	greyscale_config = /datum/greyscale_config/canister/double_stripe
 	greyscale_colors = "#6399fc#b2b2b2"
 
 /obj/machinery/portable_atmospherics/canister/oxygen
 	name = "o2 canister"
-	desc = "Oxygen. Necessary for human life."
 	gas_type = /datum/gas/oxygen
 	greyscale_config = /datum/greyscale_config/canister/stripe
 	greyscale_colors = "#2786e5#e8fefe"
 
 /obj/machinery/portable_atmospherics/canister/pluoxium
 	name = "pluoxium canister"
-	desc = "Pluoxium. Like oxygen, but more bang for your buck."
 	gas_type = /datum/gas/pluoxium
 	greyscale_config = /datum/greyscale_config/canister
 	greyscale_colors = "#2786e5"
 
-/obj/machinery/portable_atmospherics/canister/stimulum
-	name = "stimulum canister"
-	desc = "Stimulum. High energy gas, high energy people."
-	gas_type = /datum/gas/stimulum
-	greyscale_config = /datum/greyscale_config/canister
-	greyscale_colors = "#9b5d7f"
-
 /obj/machinery/portable_atmospherics/canister/plasma
 	name = "plasma canister"
-	desc = "Plasma gas. The reason YOU are here. Highly toxic."
 	gas_type = /datum/gas/plasma
 	greyscale_config = /datum/greyscale_config/canister/hazard
 	greyscale_colors = "#f64300#000000"
 
 /obj/machinery/portable_atmospherics/canister/tritium
 	name = "tritium canister"
-	desc = "Tritium. Inhalation might cause irradiation."
 	gas_type = /datum/gas/tritium
 	greyscale_config = /datum/greyscale_config/canister/hazard
 	greyscale_colors = "#3fcd40#000000"
 
 /obj/machinery/portable_atmospherics/canister/water_vapor
 	name = "water vapor canister"
-	desc = "Water Vapor. We get it, you vape."
 	gas_type = /datum/gas/water_vapor
 	filled = 1
 	greyscale_config = /datum/greyscale_config/canister/double_stripe
@@ -606,7 +619,6 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/machinery/portable_atmospherics/canister)
 
 /obj/machinery/portable_atmospherics/canister/fusion_test
 	name = "fusion test canister"
-	desc = "Don't be a badmin."
 	temp_limit = 1e12
 	pressure_limit = 1e14
 

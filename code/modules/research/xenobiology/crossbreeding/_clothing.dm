@@ -60,13 +60,13 @@ Slimecrossing Armor
 
 CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/light_prism)
 
-/obj/structure/light_prism/Initialize(mapload, var/newcolor)
+/obj/structure/light_prism/Initialize(mapload, newcolor)
 	. = ..()
 	color = newcolor
 	light_color = newcolor
 	set_light(5)
 
-/obj/structure/light_prism/attack_hand(mob/user)
+/obj/structure/light_prism/attack_hand(mob/user, list/modifiers)
 	to_chat(user, span_notice("You dispel [src]."))
 	qdel(src)
 
@@ -128,7 +128,7 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/light_prism)
 	else
 		REMOVE_TRAIT(user, TRAIT_PACIFISM, "peaceflower_[REF(src)]")
 
-/obj/item/clothing/head/peaceflower/attack_hand(mob/user)
+/obj/item/clothing/head/peaceflower/attack_hand(mob/user, list/modifiers)
 	if(iscarbon(user))
 		var/mob/living/carbon/C = user
 		if(src == C.head)
@@ -143,6 +143,7 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/light_prism)
 	item_state = "adamsuit"
 	flags_inv = NONE
 	slowdown = 0 //slowdown is handled in the equipped proc
+	clothing_flags = THICKMATERIAL
 	var/hit_reflect_chance = 40
 
 /obj/item/clothing/suit/armor/heavy/adamantine/equipped(mob/user, slot)

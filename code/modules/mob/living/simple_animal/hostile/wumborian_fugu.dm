@@ -46,9 +46,9 @@
 	QDEL_NULL(E)
 	return ..()
 
-/mob/living/simple_animal/hostile/asteroid/fugu/Life()
+/mob/living/simple_animal/hostile/asteroid/fugu/Life(delta_time = SSMOBS_DT, times_fired)
 	if(!wumbo)
-		inflate_cooldown = max((inflate_cooldown - 1), 0)
+		inflate_cooldown = max((inflate_cooldown - (0.5 * delta_time)), 0)
 	if(target && AIStatus == AI_ON)
 		E.trigger()
 	..()
@@ -145,7 +145,3 @@
 		A.environment_smash |= ENVIRONMENT_SMASH_STRUCTURES | ENVIRONMENT_SMASH_RWALLS
 		to_chat(user, span_info("You increase the size of [A], giving it a surge of strength!"))
 		qdel(src)
-
-/obj/item/fugu_gland/extrapolator_act(mob/living/user, obj/item/extrapolator/extrapolator, dry_run = FALSE)
-	. = ..()
-	EXTRAPOLATOR_ACT_ADD_DISEASES(., fugu_diseases)

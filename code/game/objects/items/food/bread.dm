@@ -20,8 +20,8 @@
 
 /obj/item/food/bread/make_processable()
 	if (slice_type)
-		AddElement(/datum/element/processable, TOOL_KNIFE, slice_type, yield, 3 SECONDS, table_required = TRUE)
-		AddElement(/datum/element/processable, TOOL_SAW, slice_type, yield, 4 SECONDS, table_required = TRUE)
+		AddElement(/datum/element/processable, TOOL_KNIFE, slice_type, yield, 3 SECONDS, table_required = TRUE, screentip_verb = "Slice")
+		AddElement(/datum/element/processable, TOOL_SAW, slice_type, yield, 4 SECONDS, table_required = TRUE, screentip_verb = "Slice")
 
 /obj/item/food/breadslice
 	name = "breadslice?"
@@ -54,6 +54,10 @@
 	. = ..()
 	AddComponent(/datum/component/customizable_reagent_holder, /obj/item/food/bread/empty, CUSTOM_INGREDIENT_ICON_FILL, max_ingredients = 8)
 
+// special subtype we use for the "Bread" Admin Smite (or the breadify proc)
+/obj/item/food/bread/plain/smite
+	desc = "If you hold it up to your ear, you can hear the screams of the damned."
+
 /obj/item/food/breadslice/plain
 	name = "bread slice"
 	desc = "A slice of home."
@@ -62,15 +66,13 @@
 	food_reagents = list(
 		/datum/reagent/consumable/nutriment = 2
 	)
+	decomp_type = /obj/item/food/breadslice/moldy
 	crafting_complexity = FOOD_COMPLEXITY_1
 
 /obj/item/food/breadslice/plain/Initialize(mapload)
 	. = ..()
 	AddComponent(/datum/component/customizable_reagent_holder, null, CUSTOM_INGREDIENT_ICON_STACK)
 
-/*
- * REAL MOLDY FOOD. We just cant support it right now. Start porting after newfood is complete
- *
 /obj/item/food/breadslice/moldy
 	name = "moldy 'bread' slice"
 	desc = "Entire stations have been ripped apart arguing whether this is still good to eat."
@@ -88,11 +90,6 @@
 	name = "bacteria-rich moldy 'bread' slice"
 	desc = "Something (possibly necroyeast) has caused this bread to rise in a macabre state of unlife. \
 		It lurchs about when unattended. You might want to locate a priest if you see this. Or maybe a flamethrower."
-
-/obj/item/food/breadslice/moldy/bacteria/Initialize(mapload)
-	. = ..()
-	AddElement(/datum/element/swabable, CELL_LINE_TABLE_MOLD, CELL_VIRUS_TABLE_GENERIC, rand(2, 4), 25)
-*/
 
 /obj/item/food/bread/meat
 	name = "meatbread loaf"
@@ -366,6 +363,6 @@
 	w_class = WEIGHT_CLASS_SMALL
 	crafting_complexity = FOOD_COMPLEXITY_2
 
-/obj/item/food/butterdog/ComponentInitialize()
+/obj/item/food/butterdog/Initialize(mapload)
 	. = ..()
 	AddComponent(/datum/component/slippery, 8 SECONDS)

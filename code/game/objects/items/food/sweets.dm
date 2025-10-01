@@ -46,6 +46,21 @@
 	food_flags = FOOD_FINGER_FOOD
 	w_class = WEIGHT_CLASS_TINY
 
+/obj/item/food/ant_candy
+	name = "ant candy"
+	desc = "A colony of ants suspended in hardened sugar. Those things are dead, right?"
+	icon_state = "ant_pop"
+	food_reagents = list(
+		/datum/reagent/consumable/nutriment = 1,
+		/datum/reagent/consumable/nutriment/vitamin = 1,
+		/datum/reagent/consumable/sugar = 5,
+		/datum/reagent/ants = 3,
+	)
+	tastes = list("candy" = 1, "insects" = 1)
+	foodtypes = JUNKFOOD | SUGAR | BUGS
+	food_flags = FOOD_FINGER_FOOD
+	w_class = WEIGHT_CLASS_TINY
+
 //Chocolates
 /obj/item/food/chocolatebar
 	name = "chocolate bar"
@@ -133,9 +148,8 @@
 	worn_icon_state = "bubblegum"
 	food_reagents = list(
 		/datum/reagent/consumable/sugar = 5,
-		/datum/reagent/medicine/bicaridine = 2,
-		/datum/reagent/medicine/kelotane = 2
-	)	//Kek
+		/datum/reagent/medicine/omnizine = 1
+	)
 	tastes = list("candy")
 	foodtypes = JUNKFOOD
 	food_flags = FOOD_FINGER_FOOD
@@ -160,6 +174,48 @@
 /obj/item/food/gumball/cyborg/proc/spamcheck()
 	if(spamchecking)
 		qdel(src)
+
+//Syndieballs
+/obj/item/food/gumball/syndicate
+	foodtypes = GROSS | TOXIC
+	food_flags = FOOD_FINGER_FOOD
+	food_reagents = list(
+		/datum/reagent/consumable/sugar = 3,
+		/datum/reagent/medicine/stabilizing_nanites = 1,
+		/datum/reagent/medicine/mine_salve = 5,
+		/datum/reagent/toxin/zombiepowder = 15
+	)
+	tastes = list("gummy death")
+
+/obj/item/food/gumball/syndicate/Initialize(mapload)
+	. = ..()
+	AddComponent(/datum/component/slippery, 0.5 SECONDS, NO_SLIP_WHEN_WALKING)
+
+/obj/item/food/gumball/syndicate/grind(datum/reagents/target_holder, mob/user)
+	reagents.remove_all(50)
+	. = ..()
+
+//Engieballs
+/obj/item/food/gumball/engineering
+	name = "engieball"
+	desc = "A yellow-orange, sugary gumball. Sure to help with whatever electrical burns or radiation hazard may be about."
+	foodtypes = GROSS
+	food_flags = FOOD_FINGER_FOOD
+	food_reagents = list(
+		/datum/reagent/consumable/sugar = 3,
+		/datum/reagent/medicine/potass_iodide = 18,
+		/datum/reagent/medicine/oxandrolone = 1,
+		/datum/reagent/medicine/synaptizine = 1
+	)
+	tastes = list("concentrated ozone")
+
+/obj/item/food/gumball/engineering/Initialize(mapload)
+	. = ..()
+	color = rgb(rand(230, 255), rand(95,180), 0)
+
+/obj/item/food/gumball/engineering/grind(datum/reagents/target_holder, mob/user)
+	reagents.remove_all(50)
+	. = ..()
 
 // Lollipop
 /obj/item/food/lollipop
@@ -279,7 +335,7 @@
 		/datum/reagent/medicine/omnizine = 2,
 	) //lollipop, but vitamins = toxins
 	tastes = list("cobwebs" = 1, "sugar" = 2)
-	foodtypes = JUNKFOOD | SUGAR //| BUGS
+	foodtypes = JUNKFOOD | SUGAR | BUGS
 	food_flags = FOOD_FINGER_FOOD
 	slot_flags = ITEM_SLOT_MASK
 	crafting_complexity = FOOD_COMPLEXITY_1

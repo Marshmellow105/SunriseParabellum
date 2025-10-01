@@ -7,6 +7,7 @@
 	pressure_resistance = 4*ONE_ATMOSPHERE
 	anchored = TRUE //initially is 0 for tile smoothing
 	flags_1 = ON_BORDER_1
+	obj_flags = CAN_BE_HIT | BLOCKS_CONSTRUCTION_DIR | IGNORE_DENSITY
 	max_integrity = 50
 	can_be_unanchored = TRUE
 	resistance_flags = ACID_PROOF
@@ -28,15 +29,26 @@
 	var/mutable_appearance/crack_overlay
 	var/real_explosion_block	//ignore this, just use explosion_block
 	var/breaksound = "shatter"
-	var/hitsound = 'sound/effects/Glasshit.ogg'
+	var/knocksound = 'sound/effects/glassknock.ogg'
+	var/bashsound = 'sound/effects/glassbash.ogg'
+	var/hitsound = 'sound/effects/glasshit.ogg'
 	flags_ricochet = RICOCHET_HARD
 	ricochet_chance_mod = 0.4
+	/// If we added a leaning component to ourselves
+	var/added_leaning = FALSE
 
 
 
 /datum/armor/structure_window
 	fire = 80
 	acid = 100
+
+/obj/structure/window/corner
+	icon_state = "window_corner"
+	density = FALSE
+
+/obj/structure/window/corner/unanchored
+	anchored = FALSE
 
 /obj/structure/window/examine(mob/user)
 	. = ..()
@@ -69,10 +81,14 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 
 	if(fulltile)
 		setDir()
+		obj_flags &= ~BLOCKS_CONSTRUCTION_DIR
+		obj_flags &= ~IGNORE_DENSITY
 
 	//windows only block while reinforced and fulltile, so we'll use the proc
 	real_explosion_block = explosion_block
 	explosion_block = EXPLOSION_BLOCK_PROC
+
+	AddComponent(/datum/component/simple_rotation, ROTATION_NEEDS_ROOM, AfterRotation = CALLBACK(src, PROC_REF(AfterRotation)))
 
 	var/static/list/loc_connections = list(
 		COMSIG_ATOM_EXIT = PROC_REF(on_exit),
@@ -81,17 +97,22 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 	if (flags_1 & ON_BORDER_1)
 		AddElement(/datum/element/connect_loc, loc_connections)
 
-/obj/structure/window/ComponentInitialize()
-	. = ..()
-	AddComponent(/datum/component/simple_rotation,ROTATION_ALTCLICK | ROTATION_CLOCKWISE | ROTATION_COUNTERCLOCKWISE | ROTATION_VERBS ,null,CALLBACK(src, PROC_REF(can_be_rotated)),CALLBACK(src, PROC_REF(after_rotation)))
 	AddElement(/datum/element/atmos_sensitive)
+
+/obj/structure/window/MouseDrop_T(atom/dropping, mob/user, params)
+	. = ..()
+	if (flags_1 & ON_BORDER_1)
+		return
+
+	//Adds the component only once. We do it here & not in Initialize() because there are tons of windows & we don't want to add to their init times
+	LoadComponent(/datum/component/leanable, dropping)
 
 /obj/structure/window/rcd_vals(mob/user, obj/item/construction/rcd/the_rcd)
 	if(the_rcd.mode == RCD_DECONSTRUCT)
 		return list("mode" = RCD_DECONSTRUCT, "delay" = 20, "cost" = 5)
 	return FALSE
 
-/obj/structure/window/rcd_act(mob/user, var/obj/item/construction/rcd/the_rcd, passed_mode)
+/obj/structure/window/rcd_act(mob/user, obj/item/construction/rcd/the_rcd, passed_mode)
 	if(passed_mode == RCD_DECONSTRUCT)
 		to_chat(user, span_notice("You deconstruct the window."))
 		log_attack("[key_name(user)] has deconstructed [src] at [loc_name(src)] using [format_text(initial(the_rcd.name))]")
@@ -111,6 +132,8 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 
 /obj/structure/window/singularity_pull(S, current_size)
 	..()
+	if(anchored && current_size >= STAGE_TWO)
+		set_anchored(FALSE)
 	if(current_size >= STAGE_FIVE)
 		deconstruct(FALSE)
 
@@ -118,6 +141,9 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 	. = ..()
 	if(.)
 		return
+
+	if(!density)
+		return TRUE
 
 	if(fulltile)
 		return FALSE
@@ -127,10 +153,10 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 
 	if(istype(mover, /obj/structure/window))
 		var/obj/structure/window/moved_window = mover
-		return valid_window_location(loc, moved_window.dir, is_fulltile = moved_window.fulltile)
+		return valid_build_direction(loc, moved_window.dir, is_fulltile = moved_window.fulltile)
 
 	if(istype(mover, /obj/structure/windoor_assembly) || istype(mover, /obj/machinery/door/window))
-		return valid_window_location(loc, mover.dir, is_fulltile = FALSE)
+		return valid_build_direction(loc, mover.dir, is_fulltile = FALSE)
 
 	return TRUE
 
@@ -157,7 +183,7 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 	user.changeNext_move(CLICK_CD_MELEE)
 	user.visible_message(span_notice("Something knocks on [src]."))
 	add_fingerprint(user)
-	playsound(src, 'sound/effects/Glassknock.ogg', 50, 1)
+	playsound(src, knocksound, 50, 1)
 	return COMPONENT_CANCEL_ATTACK_CHAIN
 
 /obj/structure/window/attack_hulk(mob/living/carbon/human/user, does_attack_animation = 0)
@@ -165,17 +191,22 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 		return 1
 	. = ..()
 
-/obj/structure/window/attack_hand(mob/user)
+/obj/structure/window/attack_hand(mob/living/user, list/modifiers)
 	. = ..()
 	if(.)
 		return
 	if(!can_be_reached(user))
 		return
 	user.changeNext_move(CLICK_CD_MELEE)
-	user.visible_message(span_notice("[user] knocks on [src]."), \
-		span_notice("You knock on [src]."))
-	add_fingerprint(user)
-	playsound(src, 'sound/effects/Glassknock.ogg', 50, 1)
+
+	if(!user.combat_mode)
+		user.visible_message("<span class='notice'>[user] knocks on [src].</span>", \
+			"<span class='notice'>You knock on [src].</span>")
+		playsound(src, knocksound, 50, TRUE)
+	else
+		user.visible_message("<span class='warning'>[user] bashes [src]!</span>", \
+			"<span class='warning'>You bash [src]!</span>")
+		playsound(src, bashsound, 100, TRUE)
 
 /obj/structure/window/attack_paw(mob/user)
 	return attack_hand(user)
@@ -187,17 +218,17 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 
 /obj/structure/window/attackby(obj/item/I, mob/living/user, params)
 	if(!can_be_reached(user))
-		return 1 //skip the afterattack
+		return TRUE //skip the afterattack
 
 	add_fingerprint(user)
 
-	if(I.tool_behaviour == TOOL_WELDER && user.a_intent == INTENT_HELP)
+	if(I.tool_behaviour == TOOL_WELDER)
 		if(atom_integrity < max_integrity)
-			if(!I.tool_start_check(user, amount=0))
+			if(!I.tool_start_check(user, amount = 0))
 				return
 
 			to_chat(user, span_notice("You begin repairing [src]..."))
-			if(I.use_tool(src, user, 40, volume=50))
+			if(I.use_tool(src, user, 40, volume = 50))
 				atom_integrity = max_integrity
 				update_nearby_icons()
 				to_chat(user, span_notice("You repair [src]."))
@@ -245,6 +276,9 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 				qdel(src)
 			return
 	return ..()
+
+/obj/structure/window/AltClick(mob/user)
+	return ..() // This hotkey is BLACKLISTED since it's used by /datum/component/simple_rotation
 
 /obj/structure/window/set_anchored(anchorvalue)
 	..()
@@ -310,24 +344,8 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 	if (fulltile)
 		. += new /obj/item/shard(location)
 
-/obj/structure/window/proc/can_be_rotated(mob/user,rotation_type)
-	if(!in_range(user, src))
-		return
-	if(anchored)
-		to_chat(user, span_warning("[src] cannot be rotated while it is fastened to the floor!"))
-		return FALSE
-
-	var/target_dir = turn(dir, rotation_type == ROTATION_CLOCKWISE ? -90 : 90)
-
-	if(!valid_window_location(loc, target_dir))
-		to_chat(user, span_warning("[src] cannot be rotated in that direction!"))
-		return FALSE
-	return TRUE
-
-/obj/structure/window/proc/after_rotation(mob/user,rotation_type)
+/obj/structure/window/proc/AfterRotation(mob/user, degrees)
 	air_update_turf(TRUE, FALSE)
-	ini_dir = dir
-	add_fingerprint(user)
 
 /obj/structure/window/Destroy()
 	var/turf/local_turf = get_turf(src)
@@ -339,7 +357,8 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 /obj/structure/window/Move()
 	var/turf/T = loc
 	. = ..()
-	move_update_air(T)
+	if(anchored)
+		move_update_air(T)
 
 /obj/structure/window/can_atmos_pass(turf/T, vertical = FALSE)
 	if(!anchored || !density)
@@ -376,10 +395,10 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 /obj/structure/window/atmos_expose(datum/gas_mixture/air, exposed_temperature)
 	take_damage(round(air.return_volume() / 100), BURN, 0, 0)
 
-/obj/structure/window/get_dumping_location(obj/item/storage/source,mob/user)
+/obj/structure/window/get_dumping_location()
 	return null
 
-/obj/structure/window/CanAStarPass(obj/item/card/id/ID, to_dir, atom/movable/caller)
+/obj/structure/window/CanAStarPass(obj/item/card/id/ID, to_dir, atom/movable/passing_atom)
 	if(!density)
 		return 1
 	if(fulltile || (dir == to_dir))
@@ -435,6 +454,13 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 /obj/structure/window/reinforced/unanchored
 	anchored = FALSE
 
+/obj/structure/window/reinforced/corner
+	icon_state = "rwindow_corner"
+	density = FALSE
+
+/obj/structure/window/reinforced/corner/unanchored
+	anchored = FALSE
+
 /obj/structure/window/plasma
 	name = "plasma window"
 	desc = "A window made out of a plasma-silicate alloy. It looks insanely tough to break and burn through."
@@ -446,10 +472,9 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 	glass_type = /obj/item/stack/sheet/plasmaglass
 	rad_insulation = RAD_NO_INSULATION
 
-/obj/structure/window/plasma/ComponentInitialize()
+/obj/structure/window/plasma/Initialize(mapload)
 	. = ..()
 	RemoveElement(/datum/element/atmos_sensitive)
-
 
 /datum/armor/window_plasma
 	melee = 75
@@ -478,6 +503,13 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 	dir = NORTH
 
 /obj/structure/window/plasma/unanchored
+	anchored = FALSE
+
+/obj/structure/window/plasma/corner
+	icon_state = "plasmawindow_corner"
+	density = FALSE
+
+/obj/structure/window/plasma/corner/unanchored
 	anchored = FALSE
 
 /obj/structure/window/plasma/reinforced
@@ -511,13 +543,25 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 /obj/structure/window/plasma/reinforced/unanchored
 	anchored = FALSE
 
+/obj/structure/window/plasma/reinforced/corner
+	icon_state = "plasmarwindow_corner"
+	density = FALSE
+
+/obj/structure/window/plasma/reinforced/corner/unanchored
+	anchored = FALSE
+
 /obj/structure/window/reinforced/tinted
 	name = "tinted window"
 	icon_state = "twindow" //what what, hon hon
 	opacity = TRUE
+
 /obj/structure/window/reinforced/tinted/frosted
 	name = "frosted window"
 	icon_state = "twindow"
+
+/obj/structure/window/reinforced/tinted/corner
+	icon_state = "twindow_corner"
+	density = FALSE
 
 /obj/structure/window/depleteduranium
 	name = "depleted uranium window"
@@ -552,6 +596,13 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 /obj/structure/window/depleteduranium/unanchored
 	anchored = FALSE
 
+/obj/structure/window/depleteduranium/corner
+	icon_state = "duwindow_corner"
+	density = FALSE
+
+/obj/structure/window/depleteduranium/corner/unanchored
+	anchored = FALSE
+
 /* Full Tile Windows (more atom_integrity) */
 
 /obj/structure/window/fulltile
@@ -564,6 +615,7 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 	max_integrity = 100
 	fulltile = TRUE
 	flags_1 = PREVENT_CLICK_UNDER_1
+	obj_flags = CAN_BE_HIT
 	glass_amount = 2
 
 /obj/structure/window/fulltile/unanchored
@@ -579,11 +631,17 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 	max_integrity = 500
 	fulltile = TRUE
 	flags_1 = PREVENT_CLICK_UNDER_1
+	obj_flags = CAN_BE_HIT
 	rad_insulation = RAD_FULL_INSULATION
 	glass_amount = 2
 
 /obj/structure/window/depleteduranium/fulltile/unanchored
 	anchored = FALSE
+
+/obj/structure/window/depleteduranium/fulltile/debug
+	name = "unbreakable depleted uranium window"
+	max_integrity = INFINITY
+	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | UNACIDABLE | ACID_PROOF
 
 /obj/structure/window/plasma/fulltile
 	icon = 'icons/obj/smooth_structures/windows/plasma_window.dmi'
@@ -595,6 +653,7 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 	max_integrity = 600
 	fulltile = TRUE
 	flags_1 = PREVENT_CLICK_UNDER_1
+	obj_flags = CAN_BE_HIT
 	glass_amount = 2
 
 /obj/structure/window/plasma/fulltile/unanchored
@@ -610,6 +669,7 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 	max_integrity = 4000
 	fulltile = TRUE
 	flags_1 = PREVENT_CLICK_UNDER_1
+	obj_flags = CAN_BE_HIT
 	glass_amount = 2
 
 /obj/structure/window/plasma/reinforced/fulltile/unanchored
@@ -625,6 +685,7 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 	max_integrity = 200
 	fulltile = TRUE
 	flags_1 = PREVENT_CLICK_UNDER_1
+	obj_flags = CAN_BE_HIT
 	glass_amount = 2
 
 /obj/structure/window/reinforced/fulltile/unanchored
@@ -639,7 +700,11 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 	canSmoothWith = list(SMOOTH_GROUP_WINDOW_FULLTILE)
 	fulltile = TRUE
 	flags_1 = PREVENT_CLICK_UNDER_1
+	obj_flags = CAN_BE_HIT
 	glass_amount = 2
+
+/obj/structure/window/reinforced/tinted/fulltile/nightclub
+	color = "#9b1d70"
 
 /obj/structure/window/reinforced/fulltile/ice
 	icon = 'icons/obj/smooth_structures/windows/rice_window.dmi'
@@ -664,6 +729,7 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 	wtype = "shuttle"
 	fulltile = TRUE
 	flags_1 = PREVENT_CLICK_UNDER_1
+	obj_flags = CAN_BE_HIT
 	reinf = TRUE
 	heat_resistance = 1600
 	armor_type = /datum/armor/window_shuttle
@@ -702,6 +768,7 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 	wtype = "shuttle"
 	fulltile = TRUE
 	flags_1 = PREVENT_CLICK_UNDER_1
+	obj_flags = CAN_BE_HIT
 	reinf = TRUE
 	heat_resistance = 1600
 	armor_type = /datum/armor/window_plastitanium
@@ -733,6 +800,7 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 	max_integrity = 15
 	fulltile = TRUE
 	flags_1 = PREVENT_CLICK_UNDER_1
+	obj_flags = CAN_BE_HIT
 	glass_amount = 2
 	glass_type = /obj/item/stack/sheet/paperframes
 	heat_resistance = 233
@@ -740,6 +808,8 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 	can_atmos_pass = ATMOS_PASS_YES
 	resistance_flags = FLAMMABLE
 	armor_type = /datum/armor/none
+	knocksound = "pageturn"
+	bashsound = 'sound/weapons/slashmiss.ogg'
 	breaksound = 'sound/items/poster_ripped.ogg'
 	hitsound = 'sound/weapons/slashmiss.ogg'
 	var/static/mutable_appearance/torn = mutable_appearance('icons/obj/smooth_structures/windows/paperframes.dmi',icon_state = "torn", layer = ABOVE_OBJ_LAYER - 0.1)
@@ -759,20 +829,14 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 	for (var/i in 1 to rand(1,4))
 		. += new /obj/item/paper/natural(location)
 
-/obj/structure/window/paperframe/attack_hand(mob/user)
+/obj/structure/window/paperframe/attack_hand(mob/living/user, list/modifiers)
 	. = ..()
 	if(.)
 		return
 	add_fingerprint(user)
-	if(user.a_intent != INTENT_HARM)
-		user.changeNext_move(CLICK_CD_MELEE)
-		user.visible_message("[user] knocks on [src].")
-		playsound(src, "pageturn", 50, 1)
-	else
-		take_damage(4, BRUTE, MELEE, 0)
-		playsound(src, hitsound, 50, 1)
+	if(user.combat_mode)
+		take_damage(4,BRUTE,MELEE, 0)
 		if(!QDELETED(src))
-			user.visible_message(span_danger("[user] tears a hole in [src]."))
 			update_appearance()
 
 /obj/structure/window/paperframe/update_icon()
@@ -787,11 +851,11 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 	QUEUE_SMOOTH(src)
 
 
-/obj/structure/window/paperframe/attackby(obj/item/W, mob/user)
+/obj/structure/window/paperframe/attackby(obj/item/W, mob/living/user)
 	if(W.is_hot())
 		fire_act(W.is_hot())
 		return
-	if(user.a_intent == INTENT_HARM)
+	if(user.combat_mode)
 		return ..()
 	if(istype(W, /obj/item/paper) && atom_integrity < max_integrity)
 		user.visible_message("[user] starts to patch the holes in \the [src].")
@@ -824,8 +888,16 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/window)
 	canSmoothWith = list(SMOOTH_GROUP_WINDOW_FULLTILE)
 	fulltile = TRUE
 	flags_1 = PREVENT_CLICK_UNDER_1
+	obj_flags = CAN_BE_HIT
 	max_integrity = 50
 	glass_amount = 2
 
 /obj/structure/window/bronze/fulltile/unanchored
+	anchored = FALSE
+
+/obj/structure/window/bronze/corner
+	icon_state = "clockwork_window_single_corner"
+	density = FALSE
+
+/obj/structure/window/bronze/corner/unanchored
 	anchored = FALSE

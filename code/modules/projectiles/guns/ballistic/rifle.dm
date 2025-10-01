@@ -20,7 +20,7 @@
 	..()
 	add_overlay("[icon_state]_bolt[bolt_locked ? "_locked" : ""]")
 
-/obj/item/gun/ballistic/rifle/shoot_live_shot(mob/living/user, pointblank, atom/pbtarget, message)
+/obj/item/gun/ballistic/rifle/after_live_shot_fired(mob/living/user, pointblank, atom/pbtarget, message)
 	if(sawn_off == TRUE)
 		if(!is_wielded)
 			recoil = 5
@@ -79,7 +79,7 @@
 	item_state = "arcane_barrage"
 	slot_flags = null
 	can_bayonet = FALSE
-	item_flags = NEEDS_PERMIT | DROPDEL | ABSTRACT | NOBLUDGEON
+	item_flags = NEEDS_PERMIT | DROPDEL | ABSTRACT | NOBLUDGEON | SLOWS_WHILE_IN_HAND | NO_WORN_SLOWDOWN
 	flags_1 = NONE
 	trigger_guard = TRIGGER_GUARD_ALLOW_ALL
 
@@ -98,7 +98,7 @@
 /obj/item/gun/ballistic/rifle/boltaction/enchanted/attack_self()
 	return
 
-/obj/item/gun/ballistic/rifle/boltaction/enchanted/process_fire(atom/target, mob/living/user, message = TRUE, params = null, zone_override = "", bonus_spread = 0)
+/obj/item/gun/ballistic/rifle/boltaction/enchanted/fire_shot_at(mob/living/user, atom/target, message, params, zone_override, aimed)
 	. = ..()
 	if(!.)
 		return

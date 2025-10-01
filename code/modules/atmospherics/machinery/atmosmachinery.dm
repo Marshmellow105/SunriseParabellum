@@ -73,6 +73,9 @@
 	fire = 100
 	acid = 70
 
+//Blank to not inherit parent
+/obj/machinery/add_context_self(datum/screentip_context/context, mob/user)
+
 /obj/machinery/atmospherics/LateInitialize()
 	. = ..()
 	update_name()
@@ -344,9 +347,9 @@
 	return
 
 /**
- * Similar to setPipenet() but instead of setting a network to a pipenet, it replaces the old pipenet with a new one, called by Merge() in datum_pipenet.dm
+ * Replaces the connection to the old_pipenet with the new_pipenet
  */
-/obj/machinery/atmospherics/proc/replace_pipenet()
+/obj/machinery/atmospherics/proc/replace_pipenet(datum/pipenet/old_pipenet, datum/pipenet/new_pipenet)
 	return
 
 /**
@@ -445,8 +448,7 @@
 		return
 	if(ishuman(user)) //other carbons like monkeys can unwrench but cant wear magboots
 		if(istype(user.shoes, /obj/item/clothing/shoes/magboots))
-			var/obj/item/clothing/shoes/magboots/M = user.shoes
-			if(M.negates_gravity())
+			if(user.has_gravity())
 				return
 	if(!pressures)
 		var/datum/gas_mixture/int_air = return_air()

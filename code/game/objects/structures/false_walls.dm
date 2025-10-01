@@ -34,7 +34,7 @@
 	new /obj/structure/falsewall/brass(loc)
 	qdel(src)
 
-/obj/structure/falsewall/attack_hand(mob/user)
+/obj/structure/falsewall/attack_hand(mob/user, list/modifiers)
 	if(opening)
 		return
 	. = ..()
@@ -129,7 +129,7 @@
 				new mineral(loc)
 	qdel(src)
 
-/obj/structure/falsewall/get_dumping_location(obj/item/storage/source,mob/user)
+/obj/structure/falsewall/get_dumping_location()
 	return null
 
 /obj/structure/falsewall/examine_status(mob/user) //So you can't detect falsewalls by examine.
@@ -181,7 +181,7 @@
 	radiate()
 	return ..()
 
-/obj/structure/falsewall/uranium/attack_hand(mob/user)
+/obj/structure/falsewall/uranium/attack_hand(mob/user, list/modifiers)
 	radiate()
 	. = ..()
 
@@ -261,7 +261,7 @@
 	mineral = /obj/item/stack/sheet/mineral/plasma
 	walltype = /turf/closed/wall/mineral/plasma
 
-/obj/structure/falsewall/plasma/ComponentInitialize()
+/obj/structure/falsewall/plasma/Initialize(mapload)
 	. = ..()
 	AddElement(/datum/element/atmos_sensitive)
 

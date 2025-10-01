@@ -60,8 +60,8 @@
 		myseed = null
 	return ..()
 
-/obj/machinery/hydroponics/constructable/attackby(obj/item/I, mob/user, params)
-	if (user.a_intent != INTENT_HARM)
+/obj/machinery/hydroponics/constructable/attackby(obj/item/I, mob/living/user, params)
+	if (!user.combat_mode)
 		// handle opening the panel
 		if(default_deconstruction_screwdriver(user, icon_state, icon_state, I))
 			return
@@ -535,17 +535,27 @@
 	if(S.has_reagent(/datum/reagent/plantnutriment/eznutriment, 1))
 		yieldmod = 1
 		mutmod = 1
+		cycledelay = 200
 		adjustNutri(round(S.get_reagent_amount(/datum/reagent/plantnutriment/eznutriment) * 1))
 
 	if(S.has_reagent(/datum/reagent/plantnutriment/left4zednutriment, 1))
 		yieldmod = 0
 		mutmod = 2
+		cycledelay = 200
 		adjustNutri(round(S.get_reagent_amount(/datum/reagent/plantnutriment/left4zednutriment) * 1))
 
 	if(S.has_reagent(/datum/reagent/plantnutriment/robustharvestnutriment, 1))
 		yieldmod = 1.3
 		mutmod = 0
+		cycledelay = 200
 		adjustNutri(round(S.get_reagent_amount(/datum/reagent/plantnutriment/robustharvestnutriment) *1 ))
+
+	if(S.has_reagent(/datum/reagent/plantnutriment/slimenutriment, 1))
+		yieldmod = 0.8
+		mutmod = 1
+		cycledelay = 150
+		adjustNutri(round(S.get_reagent_amount(/datum/reagent/plantnutriment/slimenutriment) *1))
+
 
 	// Ambrosia Gaia produces earthsblood.
 	if(S.has_reagent(/datum/reagent/medicine/earthsblood))
@@ -691,11 +701,6 @@
 		adjustHealth(round(S.get_reagent_amount(/datum/reagent/consumable/nutriment) * 0.5))
 		adjustNutri(round(S.get_reagent_amount(/datum/reagent/consumable/nutriment) * 1))
 
-	// Compost for EVERYTHING
-	if(S.has_reagent(/datum/reagent/consumable/virus_food, 1))
-		adjustNutri(round(S.get_reagent_amount(/datum/reagent/consumable/virus_food) * 0.5))
-		adjustHealth(-round(S.get_reagent_amount(/datum/reagent/consumable/virus_food) * 0.5))
-
 	// FEED ME
 	if(S.has_reagent(/datum/reagent/blood, 1))
 		adjustNutri(round(S.get_reagent_amount(/datum/reagent/blood) * 1))
@@ -712,6 +717,7 @@
 		adjustNutri(round(S.get_reagent_amount(/datum/reagent/medicine/adminordrazine) * 1))
 		adjustPests(-rand(1,5))
 		adjustWeeds(-rand(1,5))
+
 	if(S.has_reagent(/datum/reagent/medicine/adminordrazine, 5))
 		switch(rand(100))
 			if(66  to 100)
@@ -727,12 +733,6 @@
 	//Called when mob user "attacks" it with object O
 	if(IS_EDIBLE(O) || istype(O, /obj/item/reagent_containers)) // Syringe stuff (and other reagent containers now too)
 		var/obj/item/reagent_containers/reagent_source = O
-
-		if(istype(reagent_source, /obj/item/reagent_containers/syringe))
-			var/obj/item/reagent_containers/syringe/syr = reagent_source
-			if(syr.mode != 1)
-				to_chat(user, span_warning("You can't get any extract out of this plant."))
-				return
 
 		if(!reagent_source.reagents.total_volume)
 			to_chat(user, span_notice("[reagent_source] is empty."))
@@ -753,8 +753,6 @@
 			if(istype(reagent_source, /obj/item/reagent_containers/syringe/))
 				var/obj/item/reagent_containers/syringe/syr = reagent_source
 				visi_msg="[user] injects [target] with [syr]"
-				if(syr.reagents.total_volume <= syr.amount_per_transfer_from_this)
-					syr.mode = 0
 			else if(istype(reagent_source, /obj/item/reagent_containers/spray/))
 				visi_msg="[user] sprays [target] with [reagent_source]"
 				playsound(loc, 'sound/effects/spray3.ogg', 50, 1, -6)
@@ -829,7 +827,7 @@
 		message += "- Toxicity level: [span_notice("[toxic] / 100")]"
 		message += "- Water level: [span_notice("[waterlevel] / [maxwater]")]"
 		message += "- Nutrition level: [span_notice("[nutrilevel] / [maxnutri]")]"
-		to_chat(user, EXAMINE_BLOCK(jointext(message, "\n")))
+		to_chat(user, examine_block(jointext(message, "\n")))
 
 	else if(istype(O, /obj/item/cultivator))
 		if(weedlevel > 0)
@@ -842,7 +840,7 @@
 	else if(istype(O, /obj/item/storage/bag/plants))
 		harvest_plant(user)
 		for(var/obj/item/food/grown/G in locate(user.x,user.y,user.z))
-			SEND_SIGNAL(O, COMSIG_TRY_STORAGE_INSERT, G, user, TRUE)
+			O.atom_storage?.attempt_insert(G, user, TRUE)
 
 	else if(default_unfasten_wrench(user, O))
 		return
@@ -880,6 +878,12 @@
 	else
 		return ..()
 
+/obj/machinery/hydroponics/attackby_secondary(obj/item/weapon, mob/user, params)
+	if (istype(weapon, /obj/item/reagent_containers/syringe))
+		to_chat(user, "<span class='warning'>You can't get any extract out of this plant.</span>")
+		return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
+	return SECONDARY_ATTACK_CALL_NORMAL
+
 /obj/machinery/hydroponics/can_be_unfasten_wrench(mob/user, silent)
 	if (!unwrenchable)  // case also covered by NODECONSTRUCT checks in default_unfasten_wrench
 		return CANT_UNFASTEN
@@ -891,7 +895,7 @@
 
 	return ..()
 
-/obj/machinery/hydroponics/attack_hand(mob/user)
+/obj/machinery/hydroponics/attack_hand(mob/user, list/modifiers)
 	. = ..()
 	if(.)
 		return

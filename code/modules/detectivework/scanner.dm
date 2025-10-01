@@ -37,9 +37,6 @@
 	else
 		to_chat(user, span_notice("The scanner has no logs or is in use."))
 
-/obj/item/detective_scanner/attack(mob/living/M, mob/user)
-	return
-
 /obj/item/detective_scanner/proc/PrintReport()
 	// Create our paper
 	var/obj/item/paper/report_paper = new(get_turf(src))
@@ -59,6 +56,10 @@
 	// Clear the logs
 	log = list()
 	scanning = 0
+
+/obj/item/detective_scanner/pre_attack_secondary(atom/A, mob/user, params)
+	scan(A, user)
+	return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
 
 /obj/item/detective_scanner/afterattack(atom/A, mob/user, params)
 	. = ..()
@@ -96,7 +97,7 @@
 
 			var/mob/living/carbon/human/H = A
 			if(!H.gloves)
-				fingerprints += rustg_hash_string(RUSTG_HASH_MD5, H.dna.uni_identity)
+				fingerprints += rustg_hash_string(RUSTG_HASH_MD5, H.dna.unique_identity)
 
 		else if(!ismob(A))
 

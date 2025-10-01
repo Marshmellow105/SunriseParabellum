@@ -28,8 +28,6 @@
 	RegisterSignal(src, COMSIG_TWOHANDED_WIELD, PROC_REF(on_wield))
 	RegisterSignal(src, COMSIG_TWOHANDED_UNWIELD, PROC_REF(on_unwield))
 
-/obj/item/rcl/ComponentInitialize()
-	. = ..()
 	AddComponent(/datum/component/two_handed)
 	AddElement(/datum/element/update_icon_updates_onmob)
 
@@ -262,7 +260,6 @@
 	if(!wiring_gui_menu)
 		return
 
-	wiring_gui_menu.entry_animation = FALSE //stop the open anim from playing each time we update
 	var/list/choices = wiringGuiGenerateChoices(user)
 
 	wiring_gui_menu.change_choices(choices,FALSE)
@@ -328,7 +325,6 @@
 			showWiringGui(user)
 
 /obj/item/rcl/ghetto
-	actions_types = list()
 	max_amount = 30
 	name = "makeshift rapid cable layer"
 	ghetto = TRUE

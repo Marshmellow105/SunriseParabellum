@@ -11,8 +11,7 @@
 		if(A.attachable)
 			return TRUE
 
-/atom
-	var/datum/wires/wires = null
+/atom/var/datum/wires/wires = null
 
 /atom/proc/attempt_wire_interaction(mob/user)
 	if(!wires)
@@ -219,6 +218,9 @@
 
 // Overridable Procs
 /datum/wires/proc/interactable(mob/user)
+	SHOULD_CALL_PARENT(TRUE)
+	if((SEND_SIGNAL(user, COMSIG_TRY_WIRES_INTERACT, holder) & COMPONENT_CANT_INTERACT_WIRES))
+		return FALSE
 	return TRUE
 
 /datum/wires/proc/get_status()

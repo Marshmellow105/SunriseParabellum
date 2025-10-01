@@ -4,7 +4,7 @@
 	health = 500
 	maxHealth = 500
 	spacewalk = TRUE
-	a_intent = INTENT_HARM
+	combat_mode = TRUE
 	sentience_type = SENTIENCE_BOSS
 	environment_smash = ENVIRONMENT_SMASH_RWALLS
 	mob_biotypes = list(MOB_ORGANIC, MOB_EPIC)
@@ -52,6 +52,7 @@
 	if(gps_name && true_spawn)
 		AddComponent(/datum/component/gps, gps_name)
 	ADD_TRAIT(src, TRAIT_NO_TELEPORT, MEGAFAUNA_TRAIT)
+	ADD_TRAIT(src, TRAIT_MARTIAL_ARTS_IMMUNE, MEGAFAUNA_TRAIT)
 	for(var/action_type in attack_action_types)
 		var/datum/action/innate/megafauna_attack/attack_action = new action_type()
 		attack_action.Grant(src)
@@ -72,11 +73,11 @@
 		return
 	return ..()
 
-/mob/living/simple_animal/hostile/megafauna/death(gibbed, var/list/force_grant)
+/mob/living/simple_animal/hostile/megafauna/death(gibbed, list/force_grant)
 	if(health > 0)
 		return
 	else
-		var/datum/status_effect/crusher_damage/C = has_status_effect(STATUS_EFFECT_CRUSHERDAMAGETRACKING)
+		var/datum/status_effect/crusher_damage/C = has_status_effect(/datum/status_effect/crusher_damage)
 		var/crusher_kill = FALSE
 		if(C && C.total_damage >= maxHealth * 0.6)
 			crusher_kill = TRUE
@@ -130,7 +131,7 @@
 	recovery_time = world.time + buffer_time
 	ranged_cooldown = world.time + buffer_time
 
-/mob/living/simple_animal/hostile/megafauna/proc/grant_achievement(medaltype, scoretype, crusher_kill, var/list/grant_achievement = list())
+/mob/living/simple_animal/hostile/megafauna/proc/grant_achievement(medaltype, scoretype, crusher_kill, list/grant_achievement = list())
 	if(!achievement_type || (flags_1 & ADMIN_SPAWNED_1) || !SSachievements.achievements_enabled) //Don't award medals if the medal type isn't set
 		return FALSE
 	if(!grant_achievement.len)

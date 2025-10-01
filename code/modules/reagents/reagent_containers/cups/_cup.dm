@@ -32,7 +32,7 @@
 	if(!ishuman(M))
 		return
 	var/mob/living/carbon/human/H = M
-	var/obj/item/organ/tongue/T = H.getorganslot(ORGAN_SLOT_TONGUE)
+	var/obj/item/organ/tongue/T = H.get_organ_slot(ORGAN_SLOT_TONGUE)
 
 	if((drink_type & BREAKFAST) && world.time - SSticker.round_start_time < STOP_SERVING_BREAKFAST)
 		SEND_SIGNAL(H, COMSIG_ADD_MOOD_EVENT, "breakfast", /datum/mood_event/breakfast)
@@ -71,10 +71,6 @@
 		return
 
 	if(!istype(target_mob))
-		return
-
-	if(user.a_intent == INTENT_HARM)
-		//Early terminate, move to afterattack where we splash
 		return
 
 	if(target_mob != user)
@@ -140,13 +136,6 @@
 		var/trans = target.reagents.trans_to(src, amount_per_transfer_from_this, transfered_by = user)
 		to_chat(user, span_notice("You fill [src] with [trans] unit\s of the contents of [target]."))
 
-	else if(reagents.total_volume)
-		if(user.a_intent == INTENT_HARM)
-			user.visible_message(span_danger("[user] splashes the contents of [src] onto [target]!"), \
-								span_notice("You splash the contents of [src] onto [target]."))
-			reagents.expose(target, TOUCH)
-			reagents.clear_reagents()
-
 /obj/item/reagent_containers/cup/attackby(obj/item/attacking_item, mob/user, params)
 	var/hotness = attacking_item.is_hot()
 	if(hotness && reagents)
@@ -168,6 +157,15 @@
 
 	return ..()
 
+/// Callback for [datum/component/takes_reagent_appearance] to inherent style footypes
+/obj/item/reagent_containers/cup/proc/on_cup_change(datum/glass_style/has_foodtype/style)
+	if(!istype(style))
+		return
+	drink_type = style.drink_type
+
+/// Callback for [datum/component/takes_reagent_appearance] to reset to no foodtypes
+/obj/item/reagent_containers/cup/proc/on_cup_reset()
+	drink_type = NONE
 
 /obj/item/reagent_containers/cup/beaker
 	name = "beaker"
@@ -374,7 +372,8 @@
 
 /obj/item/reagent_containers/cup/mortar
 	name = "mortar"
-	desc = "A specially formed bowl of ancient design. It is possible to crush or juice items placed in it using a pestle; however the process, unlike modern methods, is slow and physically exhausting. Alt click to eject the item."
+	desc = "A specially formed bowl of ancient design. It is possible to crush or juice items placed in it using a pestle; however the process, unlike modern methods, is slow and physically exhausting."
+	desc_controls = "Alt click to eject the item."
 	icon_state = "mortar"
 	amount_per_transfer_from_this = 10
 	possible_transfer_amounts = list(5, 10, 15, 20, 25, 30, 50, 100)
@@ -428,7 +427,7 @@
 			to_chat(user, span_danger("You can't grind this!"))
 			return
 
-	if(I.juice_typepath || I.grind_results)
+	if(I.grind_results || I.juice_typepath || I.is_grindable())
 		I.forceMove(src)
 		grinded = I
 		return
@@ -444,3 +443,24 @@
 		qdel(src)
 		return
 	return ..()
+
+//A cup made from coconuts harvested in botany
+/obj/item/reagent_containers/cup/coconutcup
+	name = "coconut cup"
+	desc = "A showy form of cup typically intended for both use and display."
+	icon = 'icons/obj/drinks/drinks.dmi'
+	icon_state = "coconutcup_empty"
+	possible_transfer_amounts = list(5, 10, 15, 20, 25, 30, 50, 100)
+	volume = 50
+	spillable = TRUE
+	resistance_flags = ACID_PROOF
+	obj_flags = UNIQUE_RENAME
+	drop_sound = 'sound/items/handling/drinkglass_drop.ogg'
+	pickup_sound =  'sound/items/handling/drinkglass_pickup.ogg'
+
+/obj/item/reagent_containers/cup/coconutcup/on_reagent_change(changetype)
+	if (reagents && reagents.total_volume > 0)
+		icon_state = "coconutcup_full"
+	else
+		icon_state = "coconutcup_empty"
+

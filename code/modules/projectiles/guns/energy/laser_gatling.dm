@@ -25,7 +25,7 @@
 	return ..()
 
 //ATTACK HAND IGNORING PARENT RETURN VALUE
-/obj/item/minigunpack/attack_hand(var/mob/living/carbon/user)
+/obj/item/minigunpack/attack_hand(mob/living/carbon/user)
 	if(src.loc == user)
 		if(!armed)
 			if(user.get_item_by_slot(ITEM_SLOT_BACK) == src)
@@ -75,7 +75,7 @@
 	else
 		icon_state = "holstered"
 
-/obj/item/minigunpack/proc/attach_gun(var/mob/user)
+/obj/item/minigunpack/proc/attach_gun(mob/user)
 	if(!gun)
 		gun = new(src)
 	gun.forceMove(src)
@@ -86,11 +86,6 @@
 		src.visible_message(span_warning("The [gun.name] snaps back onto the [name]!"))
 	update_icon()
 	user.update_inv_back()
-
-/obj/item/stock_parts/cell/minigun
-	name = "Minigun gun fusion core"
-	maxcharge = 500000
-	self_recharge = 0
 
 /obj/item/gun/energy/minigun
 	name = "laser gatling gun"
@@ -107,7 +102,7 @@
 	fire_rate = 10
 	weapon_weight = WEAPON_HEAVY
 	ammo_type = list(/obj/item/ammo_casing/energy/laser)
-	cell_type = /obj/item/stock_parts/cell/minigun
+	gun_charge = 5 MEGAWATT
 	can_charge = FALSE
 	fire_sound = 'sound/weapons/laser.ogg'
 	item_flags = NEEDS_PERMIT | SLOWS_WHILE_IN_HAND
@@ -143,7 +138,7 @@
 	else
 		qdel(src)
 
-/obj/item/gun/energy/minigun/process_fire(atom/target, mob/living/user, message = TRUE, params = null, zone_override = "", bonus_spread = 0)
+/obj/item/gun/energy/minigun/fire_shot_at(mob/living/user, atom/target, message, params, zone_override, aimed)
 	if(ammo_pack)
 		if(cooldown < world.time)
 			if(current_heat >= overheat) //We've been firing too long, shut it down
@@ -166,7 +161,7 @@
 			to_chat(user, span_warning("[src] is not ready to fire again yet!"))
 	else
 		to_chat(user, span_warning("There is no power supply for [src]"))
-		return //don't process firing the gun if it's on cooldown or doesn't have an ammo pack somehow.
+	return FALSE
 
 /obj/item/gun/energy/minigun/proc/stop_firing()
 	if(current_heat) //Don't play the sound or apply cooldown unless it has actually fired at least once
@@ -185,11 +180,7 @@
 	if(heating)
 		current_heat += 2
 
-/obj/item/gun/energy/minigun/afterattack(atom/target, mob/living/user, flag, params)
+/obj/item/gun/energy/minigun/pull_trigger(atom/target, mob/living/user, params, aimed)
 	if(!ammo_pack || ammo_pack.loc != user)
 		to_chat(user, span_warning("You need the backpack power source to fire the gun!"))
 	. = ..()
-
-/obj/item/gun/energy/minigun/dropped(mob/living/user)
-	..()
-	ammo_pack.attach_gun(user)

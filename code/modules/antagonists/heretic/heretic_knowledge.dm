@@ -39,14 +39,15 @@
  * This is only ever called once per heretic.
  *
  * Arguments
- * * user - the heretic who researched something
+ * * user - The heretic who researched something
+ * * our_heretic - The antag datum of who researched us. This should never be null.
  */
-/datum/heretic_knowledge/proc/on_research(mob/user)
+/datum/heretic_knowledge/proc/on_research(mob/user, datum/antagonist/heretic/our_heretic)
 	SHOULD_CALL_PARENT(TRUE)
 
 	if(gain_text)
 		to_chat(user, span_warning("[gain_text]"))
-	on_gain(user)
+	on_gain(user, our_heretic)
 
 /**
  * Called when the knowledge is applied to a mob.
@@ -56,7 +57,7 @@
  * Arguments
  * * user - the heretic which we're applying things to
  */
-/datum/heretic_knowledge/proc/on_gain(mob/user)
+/datum/heretic_knowledge/proc/on_gain(mob/user, datum/antagonist/heretic/our_heretic)
 	return
 /**
  * Called when the knowledge is removed from a mob,
@@ -65,7 +66,7 @@
  * Arguments
  * * user - the heretic which we're removing things from
  */
-/datum/heretic_knowledge/proc/on_lose(mob/user)
+/datum/heretic_knowledge/proc/on_lose(mob/user, datum/antagonist/heretic/our_heretic)
 	return
 /**
  * Determines if a heretic can actually attempt to invoke the knowledge as a ritual.
@@ -166,7 +167,7 @@
 	QDEL_NULL(created_spell_ref)
 	return ..()
 
-/datum/heretic_knowledge/spell/on_gain(mob/user)
+/datum/heretic_knowledge/spell/on_gain(mob/user, datum/antagonist/heretic/our_heretic)
 	// Added spells are tracked on the body, and not the mind,
 	// because we handle heretic mind transfers
 	// via the antag datum (on_gain and on_lose).
@@ -174,7 +175,7 @@
 	created_spell.Grant(user)
 	created_spell_ref = WEAKREF(created_spell)
 
-/datum/heretic_knowledge/spell/on_lose(mob/user)
+/datum/heretic_knowledge/spell/on_lose(mob/user, datum/antagonist/heretic/our_heretic)
 	var/datum/action/spell/created_spell = created_spell_ref?.resolve()
 	created_spell?.Remove(user)
 
@@ -257,7 +258,7 @@
 		if(!istype(carbon_to_check, /mob/living/carbon/human))
 			continue
 		var/mob/living/carbon/human/human_to_check = carbon_to_check
-		if(fingerprints[md5(human_to_check.dna.uni_identity)])
+		if(fingerprints[md5(human_to_check.dna.unique_identity)])
 			compiled_list |= human_to_check.real_name
 			compiled_list[human_to_check.real_name] = human_to_check
 
@@ -307,23 +308,28 @@
 	animate(summoned, 10 SECONDS, alpha = 155)
 
 	message_admins("A [summoned.name] is being summoned by [ADMIN_LOOKUPFLW(user)] in [ADMIN_COORDJMP(summoned)].")
-	var/list/mob/dead/observer/candidates = poll_candidates_for_mob("Do you want to play as a [summoned.real_name]?", ROLE_HERETIC, null, 10 SECONDS, summoned)
-	if(!LAZYLEN(candidates))
+	var/mob/dead/observer/candidate = SSpolling.poll_ghosts_one_choice(
+		check_jobban = ROLE_HERETIC,
+		poll_time = 10 SECONDS,
+		jump_target = summoned,
+		role_name_text = summoned.real_name,
+		alert_pic = summoned,
+	)
+	if(!candidate)
 		loc.balloon_alert(user, "Ritual failed, no ghosts")
 		animate(summoned, 0.5 SECONDS, alpha = 0)
 		QDEL_IN(summoned, 0.6 SECONDS)
 		return FALSE
 
-	var/mob/dead/observer/picked_candidate = pick(candidates)
 	// Ok let's make them an interactable mob now, since we got a ghost
 	summoned.alpha = 255
 	summoned.notransform = FALSE
 	summoned.move_resist = initial(summoned.move_resist)
 
 	summoned.ghostize(FALSE)
-	summoned.key = picked_candidate.key
+	summoned.key = candidate.key
 
-	log_game("[key_name(user)] created a [summoned.name], controlled by [key_name(picked_candidate)].")
+	log_game("[key_name(user)] created a [summoned.name], controlled by [key_name(candidate)].")
 	message_admins("[ADMIN_LOOKUPFLW(user)] created a [summoned.name], [ADMIN_LOOKUPFLW(summoned)].")
 
 	var/datum/antagonist/heretic_monster/heretic_monster = summoned.mind.add_antag_datum(/datum/antagonist/heretic_monster)
@@ -391,7 +397,7 @@
 	// 1 uncommon item.
 	required_atoms[pick(potential_uncommoner_items)] += 1
 
-/datum/heretic_knowledge/knowledge_ritual/on_research(mob/user)
+/datum/heretic_knowledge/knowledge_ritual/on_research(mob/user, datum/antagonist/heretic/our_heretic)
 	. = ..()
 
 	var/list/requirements_string = list()
@@ -437,11 +443,10 @@
 	/// The sound to use for the announcement.
 	var/announcement_sound
 
-/datum/heretic_knowledge/final/on_research(mob/user)
+/datum/heretic_knowledge/final/on_research(mob/user, datum/antagonist/heretic/our_heretic)
 	. = ..()
-	var/datum/antagonist/heretic/heretic_datum = IS_HERETIC(user)
 	var/total_points = 0
-	for(var/datum/heretic_knowledge/knowledge as anything in flatten_list(heretic_datum.researched_knowledge))
+	for(var/datum/heretic_knowledge/knowledge as anything in flatten_list(our_heretic.researched_knowledge))
 		total_points += knowledge.cost
 
 /datum/heretic_knowledge/final/can_be_invoked(datum/antagonist/heretic/invoker)
@@ -477,6 +482,9 @@
 /datum/heretic_knowledge/final/on_finished_recipe(mob/living/user, list/selected_atoms, turf/loc)
 	var/datum/antagonist/heretic/heretic_datum = IS_HERETIC(user)
 	heretic_datum.ascended = TRUE
+
+	// Show the cool red gradiant in our UI
+	heretic_datum.update_static_data(user)
 
 	if(ishuman(user))
 		var/mob/living/carbon/human/human_user = user

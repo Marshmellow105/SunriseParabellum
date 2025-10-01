@@ -18,7 +18,7 @@
 	custom_price = 40
 	bang_protect = 2
 
-/obj/item/clothing/ears/earmuffs/ComponentInitialize()
+/obj/item/clothing/ears/earmuffs/Initialize(mapload)
 	. = ..()
 	AddElement(/datum/element/earhealing)
 
@@ -63,7 +63,7 @@
 	balloon_alert(owner, "Music is now [headphones_on? "on" : "off"]")
 
 /obj/item/clothing/ears/headphones/attack_self(mob/user)
-	if(!user.IsAdvancedToolUser())
+	if(!ISADVANCEDTOOLUSER(user))
 		to_chat(user, span_warning("You don't have the dexterity to do this!"))
 		return TRUE
 	interact(user)

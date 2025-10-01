@@ -71,7 +71,7 @@ GLOBAL_VAR_INIT(hhmysteryRoomNumber, 1337)
 	sendToNewRoom(chosenRoomNumber, user)
 
 
-/obj/item/hilbertshotel/proc/tryActiveRoom(var/roomNumber, var/mob/user)
+/obj/item/hilbertshotel/proc/tryActiveRoom(roomNumber, mob/user)
 	if(activeRooms["[roomNumber]"])
 		var/datum/turf_reservation/roomReservation = activeRooms["[roomNumber]"]
 		do_sparks(3, FALSE, get_turf(user))
@@ -80,7 +80,7 @@ GLOBAL_VAR_INIT(hhmysteryRoomNumber, 1337)
 	else
 		return FALSE
 
-/obj/item/hilbertshotel/proc/tryStoredRoom(var/roomNumber, var/mob/user)
+/obj/item/hilbertshotel/proc/tryStoredRoom(roomNumber, mob/user)
 	if(storedRooms["[roomNumber]"])
 		var/datum/turf_reservation/roomReservation = SSmapping.RequestBlockReservation(hotelRoomTemp.width, hotelRoomTemp.height)
 		hotelRoomTempEmpty.load(locate(roomReservation.bottom_left_coords[1], roomReservation.bottom_left_coords[2], roomReservation.bottom_left_coords[3]))
@@ -103,7 +103,7 @@ GLOBAL_VAR_INIT(hhmysteryRoomNumber, 1337)
 	else
 		return FALSE
 
-/obj/item/hilbertshotel/proc/sendToNewRoom(var/roomNumber, var/mob/user)
+/obj/item/hilbertshotel/proc/sendToNewRoom(roomNumber, mob/user)
 	var/datum/turf_reservation/roomReservation = SSmapping.RequestBlockReservation(hotelRoomTemp.width, hotelRoomTemp.height)
 	var/datum/async_map_generator/placer
 	if(ruinSpawned)
@@ -119,7 +119,7 @@ GLOBAL_VAR_INIT(hhmysteryRoomNumber, 1337)
 	do_sparks(3, FALSE, get_turf(user))
 	user.forceMove(locate(roomReservation.bottom_left_coords[1] + hotelRoomTemp.landingZoneRelativeX, roomReservation.bottom_left_coords[2] + hotelRoomTemp.landingZoneRelativeY, roomReservation.bottom_left_coords[3]))
 
-/obj/item/hilbertshotel/proc/linkTurfs(var/datum/turf_reservation/currentReservation, var/currentRoomnumber)
+/obj/item/hilbertshotel/proc/linkTurfs(datum/turf_reservation/currentReservation, currentRoomnumber)
 	var/area/hilbertshotel/currentArea = get_area(locate(currentReservation.bottom_left_coords[1], currentReservation.bottom_left_coords[2], currentReservation.bottom_left_coords[3]))
 	currentArea.name = "Hilbert's Hotel Room [currentRoomnumber]"
 	currentArea.parentSphere = src
@@ -287,7 +287,7 @@ GLOBAL_VAR_INIT(hhmysteryRoomNumber, 1337)
 /turf/closed/indestructible/hoteldoor/attack_tk(mob/user)
 	return //need to be close.
 
-/turf/closed/indestructible/hoteldoor/attack_hand(mob/user)
+/turf/closed/indestructible/hoteldoor/attack_hand(mob/user, list/modifiers)
 	promptExit(user)
 
 /turf/closed/indestructible/hoteldoor/attack_animal(mob/user)
@@ -299,10 +299,10 @@ GLOBAL_VAR_INIT(hhmysteryRoomNumber, 1337)
 /turf/closed/indestructible/hoteldoor/attack_hulk(mob/living/carbon/human/user, does_attack_animation)
 	promptExit(user)
 
-/turf/closed/indestructible/hoteldoor/attack_larva(mob/user)
+/turf/closed/indestructible/hoteldoor/attack_larva(mob/user, list/modifiers)
 	promptExit(user)
 
-/turf/closed/indestructible/hoteldoor/attack_slime(mob/user)
+/turf/closed/indestructible/hoteldoor/attack_slime(mob/user, list/modifiers)
 	promptExit(user)
 
 /turf/closed/indestructible/hoteldoor/attack_robot(mob/user)

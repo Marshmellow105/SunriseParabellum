@@ -235,7 +235,7 @@ SUBSYSTEM_DEF(shuttle)
 	if(call_reason)
 		SSblackbox.record_feedback("text", "shuttle_reason", 1, "[call_reason]")
 		log_game("Shuttle call reason: [call_reason]")
-	message_admins("[user ? ADMIN_LOOKUPFLW(user) : "An automated system"] has called the shuttle. (<A HREF='?_src_=holder;[HrefToken()];trigger_centcom_recall=1'>TRIGGER CENTCOM RECALL</A>)")
+	message_admins("[user ? ADMIN_LOOKUPFLW(user) : "An automated system"] has called the shuttle. (<A HREF='BYOND://?_src_=holder;[HrefToken()];trigger_centcom_recall=1'>TRIGGER CENTCOM RECALL</A>)")
 
 /datum/controller/subsystem/shuttle/proc/centcom_recall(old_timer, admiral_message)
 	if(emergency.mode != SHUTTLE_CALL || emergency.timer != old_timer)
@@ -273,7 +273,7 @@ SUBSYSTEM_DEF(shuttle)
 		return 1
 
 /datum/controller/subsystem/shuttle/proc/canRecall()
-	if(!emergency || emergency.mode != SHUTTLE_CALL || emergencyNoRecall || SSticker.mode.name == "meteor")
+	if(!emergency || emergency.mode != SHUTTLE_CALL || emergencyNoRecall)
 		return
 	var/security_num = SSsecurity_level.get_current_level_as_number()
 	switch(security_num)

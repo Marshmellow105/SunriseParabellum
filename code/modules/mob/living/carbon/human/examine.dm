@@ -88,7 +88,7 @@
 	if(!(obscured & ITEM_SLOT_EYES))
 		if(glasses && !(glasses.item_flags & EXAMINE_SKIP))
 			. += "[t_He] [t_has] [glasses.get_examine_string(user)] covering [t_his] eyes."
-		else if(eye_color == BLOODCULT_EYE && iscultist(src) && HAS_TRAIT(src, CULT_EYES))
+		else if(eye_color == BLOODCULT_EYE && IS_CULTIST(src) && HAS_TRAIT(src, CULT_EYES))
 			. += span_warning("<B>[t_His] eyes are glowing an unnatural red!</B>")
 
 	//ears
@@ -132,7 +132,7 @@
 			else
 				. += span_deadsay("[t_He] [t_is] limp and unresponsive; there are no signs of life...")
 
-	if(get_bodypart(BODY_ZONE_HEAD) && !getorgan(/obj/item/organ/brain))
+	if(get_bodypart(BODY_ZONE_HEAD) && !get_organ_by_type(/obj/item/organ/brain))
 		. += span_deadsay("It appears that [t_his] brain is missing.")
 
 	var/temp = getBruteLoss() //no need to calculate each of these twice
@@ -210,7 +210,7 @@
 	else if (is_bandaged())
 		msg += "[src] is [bleed_msg], but it is covered.\n"
 
-	if(!(user == src && src.hal_screwyhud == SCREWYHUD_HEALTHY)) //fake healthy
+	if(!(user == src && has_status_effect(/datum/status_effect/grouped/screwy_hud/fake_healthy))) //fake healthy
 		if(temp)
 			if(temp < 25)
 				msg += "[t_He] [t_has] minor [brute_msg].\n"
@@ -227,16 +227,6 @@
 				msg += "[t_He] [t_has] <b>moderate</b> [burn_msg]!\n"
 			else
 				msg += "<B>[t_He] [t_has] severe [burn_msg]!</B>\n"
-
-		temp = getCloneLoss()
-		if(temp)
-			if(temp < 25)
-				msg += "[t_He] [t_has] minor cellular damage.\n"
-			else if(temp < 50)
-				msg += "[t_He] [t_has] <b>moderate</b> cellular damage!\n"
-			else
-				msg += "<b>[t_He] [t_has] severe cellular damage!</b>\n"
-
 
 	if(fire_stacks > 0)
 		msg += "[t_He] [t_is] covered in something flammable.\n"
@@ -293,7 +283,7 @@
 
 	if(ismob(user))
 		if(HAS_TRAIT(user, TRAIT_EMPATH) && !appears_dead && (src != user))
-			if (a_intent != INTENT_HELP)
+			if (combat_mode)
 				msg += "[t_He] seem[p_s()] to be on guard.\n"
 			if (getOxyLoss() >= 10)
 				msg += "[t_He] seem[p_s()] winded.\n"
@@ -323,7 +313,7 @@
 			if(CONSCIOUS)
 				if(HAS_TRAIT(src, TRAIT_DUMB))
 					msg += "[t_He] [t_has] a stupid expression on [t_his] face.\n"
-		if(getorgan(/obj/item/organ/brain))
+		if(get_organ_by_type(/obj/item/organ/brain))
 			if(ai_controller?.ai_status == AI_STATUS_ON)
 				msg += "[span_deadsay("[t_He] do[t_es]n't appear to be [t_him]self.")]\n"
 			if(!key)
@@ -365,11 +355,11 @@
 				. += "Detected cybernetic modifications: [english_list(cyberimp_detect)]"
 			if(target_record)
 				var/physical_status = target_record.physical_status
-				. += "Physical status: <a href='?src=[REF(src)];hud=m;physical_status=1;examine_time=[world.time]'>\[[physical_status]\]</a>"
+				. += "Physical status: <a href='byond://?src=[REF(src)];hud=m;physical_status=1;examine_time=[world.time]'>\[[physical_status]\]</a>"
 				var/mental_status = target_record.mental_status
-				. += "Mental status: <a href='?src=[REF(src)];hud=m;mental_status=1;examine_time=[world.time]'>\[[mental_status]\]</a>"
+				. += "Mental status: <a href='byond://?src=[REF(src)];hud=m;mental_status=1;examine_time=[world.time]'>\[[mental_status]\]</a>"
 			target_record = find_record(perpname, GLOB.manifest.general)
-			. += "<a href='?src=[REF(src)];hud=m;evaluation=1;examine_time=[world.time]'>\[Medical evaluation\]</a><br>"
+			. += "<a href='byond://?src=[REF(src)];hud=m;evaluation=1;examine_time=[world.time]'>\[Medical evaluation\]</a><br>"
 			if(traitstring)
 				. += span_info("Detected physiological traits:\n[traitstring]")
 
@@ -385,17 +375,19 @@
 						security_note = target_record.security_note
 
 				if(ishuman(user))
-					. += "[span_deptradio("Criminal status:")] <a href='?src=[REF(src)];hud=s;status=1;examine_time=[world.time]'>\[[wanted_status]\]</a>"
+					. += "[span_deptradio("Criminal status:")] <a href='byond://?src=[REF(src)];hud=s;status=1;examine_time=[world.time]'>\[[wanted_status]\]</a>"
 				else
 					. += "[span_deptradio("Criminal status:")] [wanted_status]"
 				. += "<span class='deptradio'>Important Notes: [security_note]"
-				. += "[span_deptradio("Security record:")] <a href='?src=[REF(src)];hud=s;view=1;examine_time=[world.time]'>\[View\]</a>"
+				. += "[span_deptradio("Security record:")] <a href='byond://?src=[REF(src)];hud=s;view=1;examine_time=[world.time]'>\[View\]</a>"
 				if(ishuman(user))
-					. += jointext(list("<a href='?src=[REF(src)];hud=s;add_citation=1;examine_time=[world.time]'>\[Add citation\]</a>",
-						"<a href='?src=[REF(src)];hud=s;add_crime=1;examine_time=[world.time]'>\[Add crime\]</a>",
-						"<a href='?src=[REF(src)];hud=s;add_note=1;examine_time=[world.time]'>\[Add note\]</a>"), "")
+					. += jointext(list("<a href='byond://?src=[REF(src)];hud=s;add_citation=1;examine_time=[world.time]'>\[Add citation\]</a>",
+						"<a href='byond://?src=[REF(src)];hud=s;add_crime=1;examine_time=[world.time]'>\[Add crime\]</a>",
+						"<a href='byond://?src=[REF(src)];hud=s;add_note=1;examine_time=[world.time]'>\[Add note\]</a>"), "")
 	else if(isobserver(user) && traitstring)
 		. += span_info("<b>Traits:</b> [traitstring]")
+
+	SEND_SIGNAL(src, COMSIG_ATOM_EXAMINE, user, .)
 
 /mob/living/proc/status_effect_examines(pronoun_replacement) //You can include this in any mob's examine() to show the examine texts of status effects!
 	var/list/dat = list()
@@ -415,4 +407,4 @@
 	return !key && !get_ghost(FALSE, TRUE)
 
 /mob/living/soul_departed()
-	return getorgan(/obj/item/organ/brain) && !key && !get_ghost(FALSE, TRUE)
+	return get_organ_by_type(/obj/item/organ/brain) && !key && !get_ghost(FALSE, TRUE)

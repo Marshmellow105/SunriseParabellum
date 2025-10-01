@@ -33,10 +33,6 @@
 	var/igniter_type = /obj/item/assembly/igniter
 	trigger_guard = TRIGGER_GUARD_NORMAL
 
-/obj/item/flamethrower/ComponentInitialize()
-	. = ..()
-	AddElement(/datum/element/update_icon_updates_onmob)
-
 /obj/item/flamethrower/Destroy()
 	if(weldtool)
 		qdel(weldtool)
@@ -149,7 +145,7 @@
 	toggle_igniter(user)
 
 /obj/item/flamethrower/AltClick(mob/user)
-	if(ptank && isliving(user) && user.canUseTopic(src, BE_CLOSE, ismonkey(user)))
+	if(ptank && isliving(user) && user.canUseTopic(src, BE_CLOSE, NO_DEXTERITY, FALSE, TRUE))
 		user.put_in_hands(ptank)
 		ptank = null
 		to_chat(user, span_notice("You remove the plasma tank from [src]!"))
@@ -241,13 +237,15 @@
 			ptank = new /obj/item/tank/internals/plasma/full(src)
 		update_icon()
 
+	AddElement(/datum/element/update_icon_updates_onmob)
+
 /obj/item/flamethrower/full
 	create_full = TRUE
 
 /obj/item/flamethrower/full/tank
 	create_with_tank = TRUE
 
-/obj/item/flamethrower/hit_reaction(mob/living/carbon/human/owner, atom/movable/hitby, attack_text = "the attack", final_block_chance = 0, damage = 0, attack_type = MELEE_ATTACK)
+/obj/item/flamethrower/hit_reaction(mob/living/carbon/human/owner, atom/movable/hitby, attack_text = "the attack", damage = 0, attack_type = MELEE_ATTACK)
 	var/obj/projectile/P = hitby
 	if(damage && attack_type == PROJECTILE_ATTACK && P.damage_type != STAMINA && prob(15))
 		owner.visible_message(span_danger("\The [attack_text] hits the fuel tank on [owner]'s [name], rupturing it! What a shot!"))

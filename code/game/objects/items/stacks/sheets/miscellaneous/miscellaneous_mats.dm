@@ -36,7 +36,7 @@ Miscellaneous material sheets
 	merge_type = /obj/item/stack/sheet/sandbags
 
 GLOBAL_LIST_INIT(sandbag_recipes, list ( \
-	new/datum/stack_recipe("sandbags", /obj/structure/barricade/sandbags, 1, one_per_turf = TRUE, on_floor = TRUE, time = 2.5 SECONDS), \
+	new/datum/stack_recipe("sandbags", /obj/structure/barricade/sandbags, 1, time = 2.5 SECONDS, crafting_flags = CRAFT_CHECK_DENSITY | CRAFT_ONE_PER_TURF | CRAFT_ON_SOLID_GROUND, category = CAT_STRUCTURE), \
 	))
 
 /obj/item/stack/sheet/sandbags/get_recipes()
@@ -121,20 +121,6 @@ GLOBAL_LIST_INIT(sandbag_recipes, list ( \
 				new/obj/item/storage/box/clown(droploc) //bugfix
 	else
 		. = ..()
-
-/* capitalisium and stalinium*/
-
-/obj/item/stack/sheet/capitalisium
-	name = "capitalisium sheet"
-	desc = "A source of raw capitalism, capable of bringing forth the prophesized Capitalist Golem."
-	icon_state = "sheet-capitalisium"
-	merge_type = /obj/item/stack/sheet/capitalisium
-
-/obj/item/stack/sheet/stalinium
-	name = "stalinium sheet"
-	desc = "A source of raw socialism, capable of bringing forth the prophesized Soviet Golem."
-	icon_state = "sheet-stalinium"
-	merge_type = /obj/item/stack/sheet/stalinium
 
 /obj/item/stack/sheet/meat
 	name = "meat sheets"

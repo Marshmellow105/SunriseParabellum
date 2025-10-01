@@ -21,7 +21,6 @@
 	icon_state = "drone_maint_grey"
 	icon_living = "drone_maint_grey"
 	icon_dead = "drone_maint_dead"
-	possible_a_intents = list(INTENT_HELP, INTENT_HARM)
 	health = 30
 	maxHealth = 30
 	unsuitable_atmos_damage = 0
@@ -102,6 +101,8 @@
 
 	for(var/datum/atom_hud/data/diagnostic/diag_hud in GLOB.huds)
 		diag_hud.add_to_hud(src)
+
+	ADD_TRAIT(src, TRAIT_NEGATES_GRAVITY, INNATE_TRAIT)
 
 	listener = new(list(ALARM_ATMOS, ALARM_FIRE, ALARM_POWER), list(z))
 	RegisterSignal(listener, COMSIG_ALARM_TRIGGERED, PROC_REF(alarm_triggered))
@@ -232,12 +233,6 @@
 /mob/living/simple_animal/drone/flash_act(intensity = 1, override_blindness_check = 0, affect_silicon = 0)
 	if(affect_silicon)
 		return ..()
-
-/mob/living/simple_animal/drone/mob_negates_gravity()
-	return !isspaceturf(get_turf(src)) //We don't mimick gravity on space turfs
-
-/mob/living/simple_animal/drone/has_gravity(turf/T)
-	return ..() || mob_negates_gravity()
 
 /mob/living/simple_animal/drone/experience_pressure_difference(pressure_difference, direction)
 	return

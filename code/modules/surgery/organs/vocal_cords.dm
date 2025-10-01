@@ -38,7 +38,7 @@
 	icon_state = "adamantine_cords"
 
 /datum/action/item_action/organ_action/use/adamantine_vocal_cords/on_activate(mob/user, atom/target)
-	var/message = input(owner, "Resonate a message to all nearby golems.", "Resonate")
+	var/message = tgui_input_text(owner, "Resonate a message to all nearby golems.", "Resonate")
 	if(QDELETED(src) || QDELETED(owner) || !message)
 		return
 	owner.say(".x[message]")
@@ -48,7 +48,7 @@
 	for(var/m in GLOB.player_list)
 		if(iscarbon(m))
 			var/mob/living/carbon/C = m
-			if(C.getorganslot(ORGAN_SLOT_ADAMANTINE_RESONATOR))
+			if(C.get_organ_slot(ORGAN_SLOT_ADAMANTINE_RESONATOR))
 				to_chat(C, msg)
 		if(isobserver(m))
 			var/link = FOLLOW_LINK(m, owner)
@@ -90,7 +90,7 @@
 	return TRUE
 
 /datum/action/item_action/organ_action/colossus/on_activate(mob/user, atom/target)
-	var/command = input(owner, "Speak with the Voice of God", "Command")
+	var/command = tgui_input_text(owner, "Speak with the Voice of God", "Command")
 	if(QDELETED(src) || QDELETED(owner))
 		return
 	if(!command)
@@ -130,7 +130,7 @@
 
 	var/log_message = uppertext(message)
 	if(!span_list || !span_list.len)
-		if(iscultist(user))
+		if(IS_CULTIST(user))
 			span_list = list("narsiesmall")
 		else
 			span_list = list()
@@ -170,7 +170,7 @@
 			power_multiplier *= 0.5
 
 	//Cultists are closer to their gods and are more powerful, but they'll give themselves away
-	if(iscultist(user))
+	if(IS_CULTIST(user))
 		power_multiplier *= 2
 
 	//Try to check if the speaker specified a name or a job to focus on
@@ -283,8 +283,15 @@
 	//HALLUCINATE
 	else if((findtext(message, hallucinate_words)))
 		cooldown = COOLDOWN_MEME
-		for(var/mob/living/carbon/C in listeners)
-			new /datum/hallucination/delusion(C, TRUE, null,150 * power_multiplier,0)
+		for(var/mob/living/target in listeners)
+			target.cause_hallucination( \
+				get_random_valid_hallucination_subtype(/datum/hallucination/delusion/preset), \
+				"voice of god", \
+				duration = 15 SECONDS * power_multiplier, \
+				affects_us = FALSE, \
+				affects_others = TRUE, \
+				skip_nearby = FALSE, \
+			)
 
 	//WAKE UP
 	else if((findtext(message, wakeup_words)))
@@ -413,38 +420,6 @@
 			var/mob/living/L = V
 			if(L.m_intent != MOVE_INTENT_RUN)
 				L.toggle_move_intent()
-
-	//HELP INTENT
-	else if((findtext(message, helpintent_words)))
-		cooldown = COOLDOWN_MEME
-		for(var/mob/living/carbon/human/H in listeners)
-			addtimer(CALLBACK(H, /mob/verb/a_intent_change, INTENT_HELP), i * 2)
-			addtimer(CALLBACK(H, TYPE_PROC_REF(/mob, click_random_mob)), i * 2)
-			i++
-
-	//DISARM INTENT
-	else if((findtext(message, disarmintent_words)))
-		cooldown = COOLDOWN_MEME
-		for(var/mob/living/carbon/human/H in listeners)
-			addtimer(CALLBACK(H, /mob/verb/a_intent_change, INTENT_DISARM), i * 2)
-			addtimer(CALLBACK(H, TYPE_PROC_REF(/mob, click_random_mob)), i * 2)
-			i++
-
-	//GRAB INTENT
-	else if((findtext(message, grabintent_words)))
-		cooldown = COOLDOWN_MEME
-		for(var/mob/living/carbon/human/H in listeners)
-			addtimer(CALLBACK(H, /mob/verb/a_intent_change, INTENT_GRAB), i * 2)
-			addtimer(CALLBACK(H, TYPE_PROC_REF(/mob, click_random_mob)), i * 2)
-			i++
-
-	//HARM INTENT
-	else if((findtext(message, harmintent_words)))
-		cooldown = COOLDOWN_MEME
-		for(var/mob/living/carbon/human/H in listeners)
-			addtimer(CALLBACK(H, /mob/verb/a_intent_change, INTENT_HARM), i * 2)
-			addtimer(CALLBACK(H, TYPE_PROC_REF(/mob, click_random_mob)), i * 2)
-			i++
 
 	//THROW/CATCH
 	else if((findtext(message, throwmode_words)))

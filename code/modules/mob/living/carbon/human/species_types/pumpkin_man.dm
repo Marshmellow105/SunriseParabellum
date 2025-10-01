@@ -4,8 +4,15 @@
 	id = SPECIES_PUMPKINPERSON
 	sexes = 0
 	meat = /obj/item/food/pieslice/pumpkin
-	species_traits = list(NOEYESPRITES,MUTCOLORS,EYECOLOR)
-	inherent_traits = list(TRAIT_ALWAYS_CLEAN, TRAIT_BEEFRIEND, TRAIT_NONECRODISEASE)
+	species_traits = list(
+		NOEYESPRITES,
+		MUTCOLORS,
+		EYECOLOR
+	)
+	inherent_traits = list(
+		TRAIT_BEEFRIEND,
+		TRAIT_NONECRODISEASE
+	)
 	inherent_factions = list(FACTION_PLANTS, FACTION_VINES)
 	burnmod = 1.25
 	heatmod = 1.5
@@ -22,12 +29,14 @@
 	mutantbrain = /obj/item/organ/brain/pumpkin_brain
 	mutanttongue = /obj/item/organ/tongue/diona/pumpkin
 
-	species_chest = /obj/item/bodypart/chest/pumpkin_man
-	species_head = /obj/item/bodypart/head/pumpkin_man
-	species_l_arm = /obj/item/bodypart/l_arm/pumpkin_man
-	species_r_arm = /obj/item/bodypart/r_arm/pumpkin_man
-	species_l_leg = /obj/item/bodypart/l_leg/pumpkin_man
-	species_r_leg = /obj/item/bodypart/r_leg/pumpkin_man
+	bodypart_overrides = list(
+		BODY_ZONE_HEAD = /obj/item/bodypart/head/pumpkin_man,
+		BODY_ZONE_CHEST = /obj/item/bodypart/chest/pumpkin_man,
+		BODY_ZONE_L_ARM = /obj/item/bodypart/l_arm/pumpkin_man,
+		BODY_ZONE_R_ARM = /obj/item/bodypart/r_arm/pumpkin_man,
+		BODY_ZONE_L_LEG = /obj/item/bodypart/l_leg/pumpkin_man,
+		BODY_ZONE_R_LEG = /obj/item/bodypart/r_leg/pumpkin_man
+	)
 
 //Only allow race roundstart on Halloween
 /datum/species/pumpkin_man/check_roundstart_eligible()
@@ -78,10 +87,10 @@
 				H.Paralyze(100)
 				H.visible_message(span_warning("[H] writhes in pain as [H.p_their()] vacuoles boil."), span_userdanger("You writhe in pain as your vacuoles boil!"), span_italics("You hear the crunching of leaves."))
 				if(prob(80))
-					H.easy_randmut(NEGATIVE+MINOR_NEGATIVE)
+					H.easy_random_mutate(NEGATIVE+MINOR_NEGATIVE)
 				else
-					H.easy_randmut(POSITIVE)
-				H.randmuti()
+					H.easy_random_mutate(POSITIVE)
+				H.random_mutate()
 				H.domutcheck()
 			else
 				H.adjustFireLoss(rand(5,15))
@@ -114,7 +123,7 @@
 	//Check if the item is sharp - give owner a random face if applicable
 	var/mob/living/carbon/human/M = _source
 	var/obj/item/bodypart/head/pumpkin_man/head = M.get_bodypart(BODY_ZONE_HEAD)
-	if(_item.is_sharp() && head?.item_flags & ISCARVABLE && _user.a_intent == INTENT_HELP && _user.is_zone_selected(BODY_ZONE_HEAD))
+	if(_item.is_sharp() && head?.item_flags & ISCARVABLE && !_user.combat_mode && _user.is_zone_selected(BODY_ZONE_HEAD))
 		to_chat(_user, span_notice("You begin to carve a face into [_source]..."))
 		//Do after for *flourish*
 		if(do_after(_user, 3 SECONDS))
@@ -180,7 +189,7 @@
 		//Otherwise pull our brain out
 		else
 			to_chat(H, span_warning("You pull your brain out!"))
-			var/obj/item/organ/B = H.getorganslot(ORGAN_SLOT_BRAIN)
+			var/obj/item/organ/B = H.get_organ_slot(ORGAN_SLOT_BRAIN)
 			B.Remove(H)
 			B.forceMove(get_turf(H))
 

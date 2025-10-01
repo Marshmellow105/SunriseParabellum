@@ -10,6 +10,7 @@
 	icon = 'icons/obj/machines/sleeper.dmi'
 	icon_state = "sleeper"
 	density = FALSE
+	obj_flags = BLOCKS_CONSTRUCTION
 	state_open = TRUE
 	circuit = /obj/item/circuitboard/machine/sleeper
 	clicksound = 'sound/machines/pda_button1.ogg'
@@ -37,7 +38,6 @@
 	var/synthesizing = FALSE
 	var/scrambled_chems = FALSE //Are chem buttons scrambled? used as a warning
 	var/enter_message = span_notice("<b>You feel cool air surround you. You go numb as your senses turn inward.</b>")
-	dept_req_for_free = ACCOUNT_MED_BITFLAG
 	fair_market_price = 5
 
 /obj/machinery/sleeper/Initialize(mapload)
@@ -102,7 +102,7 @@
 /obj/machinery/sleeper/attackby(obj/item/I, mob/living/user, params)
 	if ((istype(I, /obj/item/reagent_containers/cup) \
 		|| istype(I, /obj/item/reagent_containers/chem_bag)) \
-		&& user.a_intent != INTENT_HARM)
+		&& !user.combat_mode)
 		if (length(inserted_vials) >= max_vials)
 			to_chat(user, span_warning("[src] cannot hold any more!"))
 			return
@@ -158,7 +158,7 @@
 
 
 /obj/machinery/sleeper/MouseDrop_T(mob/target, mob/user)
-	if(HAS_TRAIT(user, TRAIT_UI_BLOCKED) || !Adjacent(user) || !user.Adjacent(target) || !iscarbon(target) || !user.IsAdvancedToolUser())
+	if(HAS_TRAIT(user, TRAIT_UI_BLOCKED) || !Adjacent(user) || !user.Adjacent(target) || !iscarbon(target) || !ISADVANCEDTOOLUSER(user))
 		return
 
 	close_machine(target)

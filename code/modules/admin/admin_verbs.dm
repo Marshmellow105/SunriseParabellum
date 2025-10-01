@@ -75,6 +75,7 @@ GLOBAL_PROTECT(admin_verbs_admin)
 	/client/proc/openTicketManager,
 	/client/proc/battle_royale,
 	/client/proc/delete_book,
+	/datum/admins/proc/paintings_manager,
 	/client/proc/cmd_admin_send_pda_msg,
 	/client/proc/fax_panel, /*send a paper to fax*/
 	/datum/admins/proc/display_tags,
@@ -90,7 +91,7 @@ GLOBAL_LIST_INIT(admin_verbs_fun, list(
 	/client/proc/set_dynex_scale,
 	/client/proc/drop_dynex_bomb,
 	/client/proc/cinematic,
-	/client/proc/one_click_antag,
+	/client/proc/create_ert,
 	/client/proc/cmd_admin_add_freeform_ai_law,
 	/client/proc/object_say,
 	/client/proc/toggle_random_events,
@@ -110,6 +111,7 @@ GLOBAL_LIST_INIT(admin_verbs_fun, list(
 	/client/proc/spawn_floor_cluwne,
 	/client/proc/spawnhuman,
 	/client/proc/debug_spell_requirements,
+	/datum/admins/proc/dynamic_panel,
 	))
 GLOBAL_PROTECT(admin_verbs_fun)
 GLOBAL_LIST_INIT(admin_verbs_spawn, list(
@@ -138,8 +140,8 @@ GLOBAL_PROTECT(admin_verbs_server)
 	/client/proc/getserverlogs,		/*for accessing server logs*/
 	/client/proc/cmd_debug_del_all,
 	/client/proc/toggle_random_events,
-	/client/proc/forcerandomrotate,
-	/client/proc/adminchangemap,
+	/client/proc/admin_change_map,
+	/client/proc/admin_revert_map,
 	/client/proc/panicbunker,
 	/client/proc/toggle_interviews,
 	/client/proc/toggle_hub,
@@ -160,7 +162,6 @@ GLOBAL_PROTECT(admin_verbs_debug)
 	/client/proc/enable_debug_verbs,
 	/client/proc/callproc,
 	/client/proc/callproc_datum,
-	/client/proc/forcemapconfig,
 	/client/proc/SDQL2_query,
 	/client/proc/test_movable_UI,
 	/client/proc/test_snap_UI,
@@ -179,11 +180,11 @@ GLOBAL_PROTECT(admin_verbs_debug)
 	/client/proc/map_template_upload,
 	/client/proc/jump_to_ruin,
 	/client/proc/generate_ruin,
+	/client/proc/generate_pipe_spritesheet,
 	/client/proc/clear_dynamic_transit,
 	/client/proc/run_empty_query,
 	/client/proc/fucky_wucky,
 	/client/proc/toggle_medal_disable,
-	/client/proc/view_runtimes,
 	/client/proc/pump_random_event,
 	/client/proc/cmd_display_init_log,
 	/client/proc/cmd_display_overlay_log,
@@ -206,7 +207,6 @@ GLOBAL_PROTECT(admin_verbs_debug)
 	/datum/admins/proc/create_or_modify_area,
 	#ifdef TESTING
 	/client/proc/check_missing_sprites,
-	/client/proc/run_dynamic_simulations,
 	#endif
 	#ifdef SENDMAPS_PROFILE
 	/client/proc/display_sendmaps,
@@ -216,6 +216,8 @@ GLOBAL_PROTECT(admin_verbs_debug)
 	/client/proc/test_dview_to_lum_changes,
 	/client/proc/cmd_regenerate_asset_cache,
 	/client/proc/cmd_clear_smart_asset_cache,
+	/client/proc/view_runtimes,
+	/client/proc/debug_hallucination_weighted_list_per_type,
 	)
 
 GLOBAL_LIST_INIT(admin_verbs_possess, list(/proc/possess, GLOBAL_PROC_REF(release)))

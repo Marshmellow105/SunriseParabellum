@@ -14,9 +14,8 @@
 	var/soft_color = "mime"
 
 /obj/item/clothing/head/soft/AltClick(mob/user)
-	if(!user.canUseTopic(src, BE_CLOSE, ismonkey(user)))
-		return
-	else
+	..()
+	if(user.canUseTopic(src, BE_CLOSE, NO_DEXTERITY, FALSE, !iscyborg(user)))
 		flip(user)
 
 /obj/item/clothing/head/soft/proc/flip(mob/user)
@@ -102,6 +101,7 @@
 	soft_color = "sec"
 	armor_type = /datum/armor/soft_sec
 	strip_delay = 60
+	custom_price = 30
 
 
 /datum/armor/soft_sec

@@ -37,7 +37,7 @@
 	. = ..()
 	cargo_holder = null
 
-/obj/item/mecha_parts/mecha_equipment/hydraulic_clamp/action(mob/source, atom/target, params)
+/obj/item/mecha_parts/mecha_equipment/hydraulic_clamp/action(mob/living/source, atom/target, list/modifiers)
 	if(!action_checks(target))
 		return
 	if(!cargo_holder)
@@ -91,7 +91,8 @@
 		var/mob/living/M = target
 		if(M.stat == DEAD)
 			return
-		if(source.a_intent == INTENT_HELP)
+
+		if(!source.combat_mode)
 			step_away(M,chassis)
 			if(killer_clamp)
 				target.visible_message(span_danger("[chassis] tosses [target] like a piece of paper!"), \
@@ -102,7 +103,7 @@
 				chassis.visible_message(span_notice("[chassis] pushes [target] out of the way."), \
 				span_notice("[chassis] pushes you aside."))
 			return ..()
-		else if(source.a_intent == INTENT_DISARM && iscarbon(M))//meme clamp here
+		else if(LAZYACCESS(modifiers, RIGHT_CLICK) && iscarbon(M))//meme clamp here
 			if(!killer_clamp)
 				to_chat(source, span_notice("You longingly wish to tear [M]'s arms off."))
 				return
@@ -122,7 +123,7 @@
 			playsound(src, get_dismember_sound(), 80, TRUE)
 			target.visible_message(span_danger("[chassis] rips [target]'s arms off!"), \
 						   span_userdanger("[chassis] rips your arms off!"))
-			log_combat(source, M, "removed both arms with a real clamp,", "[name]", "(INTENT: [uppertext(source.a_intent)]) (DAMTYPE: [uppertext(damtype)])")
+			log_combat(source, M, "removed both arms with a real clamp,", "[name]", "(COMBAT MODE: [uppertext(source.combat_mode)] (DAMTYPE: [uppertext(damtype)])")
 			return ..()
 
 		M.take_overall_damage(clamp_damage)
@@ -133,7 +134,7 @@
 		target.visible_message(span_danger("[chassis] squeezes [target]!"), \
 							span_userdanger("[chassis] squeezes you!"),\
 							span_hear("You hear something crack."))
-		log_combat(source, M, "attacked", "[name]", "(INTENT: [uppertext(source.a_intent)]) (DAMTYPE: [uppertext(damtype)])")
+		log_combat(source, M, "attacked", "[name]", "(Combat mode: [source.combat_mode ? "On" : "Off"]) (DAMTYPE: [uppertext(damtype)])")
 	return ..()
 
 //This is pretty much just for the death-ripley
@@ -163,7 +164,7 @@
 	create_reagents(1000)
 	reagents.add_reagent(/datum/reagent/water, 1000)
 
-/obj/item/mecha_parts/mecha_equipment/extinguisher/action(mob/source, atom/target, params)
+/obj/item/mecha_parts/mecha_equipment/extinguisher/action(mob/source, atom/target, list/modifiers)
 	if(!action_checks(target) || get_dist(chassis, target)>3)
 		return
 
@@ -194,7 +195,7 @@
 
 	var/delay = 2
 	var/datum/move_loop/our_loop = SSmove_manager.move_towards_legacy(water, pick(targets), delay, timeout = delay * 4, priority = MOVEMENT_ABOVE_SPACE_PRIORITY)
-	RegisterSignal(our_loop, COMSIG_PARENT_QDELETING, PROC_REF(water_finished_moving))
+	RegisterSignal(our_loop, COMSIG_QDELETING, PROC_REF(water_finished_moving))
 
 /obj/item/mecha_parts/mecha_equipment/extinguisher/proc/water_finished_moving(datum/move_loop/has_target/source)
 	SIGNAL_HANDLER
@@ -237,7 +238,7 @@
 	GLOB.rcd_list -= src
 	return ..()
 
-/obj/item/mecha_parts/mecha_equipment/rcd/action(mob/source, atom/target, params)
+/obj/item/mecha_parts/mecha_equipment/rcd/action(mob/source, atom/target, list/modifiers)
 	if(!isturf(target) && !istype(target, /obj/machinery/door/airlock))
 		target = get_turf(target)
 	if(!action_checks(target) || get_dist(chassis, target)>3 || istype(target, /turf/open/space/transit))
@@ -302,7 +303,7 @@
 				energy_drain = 2*initial(energy_drain)
 
 /obj/item/mecha_parts/mecha_equipment/rcd/get_equip_info()
-	return "[..()] \[<a href='?src=[REF(src)];mode=0'>D</a>|<a href='?src=[REF(src)];mode=1'>C</a>|<a href='?src=[REF(src)];mode=2'>A</a>\]"
+	return "[..()] \[<a href='byond://?src=[REF(src)];mode=0'>D</a>|<a href='byond://?src=[REF(src)];mode=1'>C</a>|<a href='byond://?src=[REF(src)];mode=2'>A</a>\]"
 
 #undef MODE_DECONSTRUCT
 #undef MODE_WALL
@@ -344,7 +345,7 @@
 		chassis.events.clearEvent("onMove",event)
 	return ..()
 
-/obj/item/mecha_parts/mecha_equipment/cable_layer/action(var/obj/item/stack/cable_coil/target)
+/obj/item/mecha_parts/mecha_equipment/cable_layer/action(obj/item/stack/cable_coil/target)
 	if(!action_checks(target))
 		return
 	if(istype(target) && target.amount)
@@ -385,7 +386,7 @@
 /obj/item/mecha_parts/mecha_equipment/cable_layer/get_equip_info()
 	var/output = ..()
 	if(output)
-		return "[output] \[Cable: [cable ? cable.amount : 0] m\][(cable && cable.amount) ? "- <a href='?src=[REF(src)];toggle=1'>[!equip_ready?"Dea":"A"]ctivate</a>|<a href='?src=[REF(src)];cut=1'>Cut</a>" : null]"
+		return "[output] \[Cable: [cable ? cable.amount : 0] m\][(cable && cable.amount) ? "- <a href='byond://?src=[REF(src)];toggle=1'>[!equip_ready?"Dea":"A"]ctivate</a>|<a href='byond://?src=[REF(src)];cut=1'>Cut</a>" : null]"
 	return
 
 /obj/item/mecha_parts/mecha_equipment/cable_layer/proc/use_cable(amount)
@@ -404,7 +405,7 @@
 /obj/item/mecha_parts/mecha_equipment/cable_layer/proc/reset()
 	last_piece = null
 
-/obj/item/mecha_parts/mecha_equipment/cable_layer/proc/dismantleFloor(var/turf/new_turf)
+/obj/item/mecha_parts/mecha_equipment/cable_layer/proc/dismantleFloor(turf/new_turf)
 	if(isfloorturf(new_turf))
 		var/turf/open/floor/T = new_turf
 		if(!isplatingturf(T))
@@ -413,7 +414,7 @@
 			T.make_plating()
 	return !new_turf.underfloor_accessibility
 
-/obj/item/mecha_parts/mecha_equipment/cable_layer/proc/layCable(var/turf/new_turf)
+/obj/item/mecha_parts/mecha_equipment/cable_layer/proc/layCable(turf/new_turf)
 	if(equip_ready || !istype(new_turf) || !dismantleFloor(new_turf))
 		return reset()
 	var/fdirn = turn(chassis.dir,180)

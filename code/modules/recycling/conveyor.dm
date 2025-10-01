@@ -7,7 +7,7 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 	base_icon_state = "conveyor"
 	name = "conveyor belt"
 	desc = "A conveyor belt."
-	layer = BELOW_OPEN_DOOR_LAYER
+	layer = GAS_PUMP_LAYER
 	processing_flags = NONE
 	var/operating = 0	// 1 if running forward, -1 if backwards, 0 if off
 	var/operable = 1	// true if can operate (no broken segments in this belt run)
@@ -112,9 +112,9 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/machinery/conveyor)
 		neighbors["[direction]"] = TRUE
 		valid.neighbors["[turn(direction, 180)]"] = TRUE
 		RegisterSignal(valid, COMSIG_MOVABLE_MOVED, PROC_REF(nearby_belt_changed), override=TRUE)
-		RegisterSignal(valid, COMSIG_PARENT_QDELETING, PROC_REF(nearby_belt_changed), override=TRUE)
+		RegisterSignal(valid, COMSIG_QDELETING, PROC_REF(nearby_belt_changed), override=TRUE)
 		valid.RegisterSignal(src, COMSIG_MOVABLE_MOVED, PROC_REF(nearby_belt_changed), override=TRUE)
-		valid.RegisterSignal(src, COMSIG_PARENT_QDELETING, PROC_REF(nearby_belt_changed), override=TRUE)
+		valid.RegisterSignal(src, COMSIG_QDELETING, PROC_REF(nearby_belt_changed), override=TRUE)
 
 /obj/machinery/conveyor/proc/nearby_belt_changed(datum/source)
 	SIGNAL_HANDLER
@@ -217,7 +217,7 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/machinery/conveyor)
 	SSmove_manager.stop_looping(thing, SSconveyors)
 
 // attack with item, place item on conveyor
-/obj/machinery/conveyor/attackby(obj/item/I, mob/user, params)
+/obj/machinery/conveyor/attackby(obj/item/I, mob/living/user, params)
 	if(I.tool_behaviour == TOOL_CROWBAR)
 		user.visible_message(span_notice("[user] struggles to pry up \the [src] with \the [I]."), \
 		span_notice("You struggle to pry up \the [src] with \the [I]."))
@@ -246,7 +246,7 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/machinery/conveyor)
 			update_move_direction()
 			to_chat(user, span_notice("You reverse [src]'s direction."))
 
-	else if(user.a_intent != INTENT_HARM)
+	else if(!user.combat_mode)
 		user.transferItemToLoc(I, drop_location())
 	else
 		return ..()
@@ -266,7 +266,7 @@ DEFINE_BUFFER_HANDLER(/obj/machinery/conveyor)
 	return COMPONENT_BUFFER_RECEIVED
 
 // attack with hand, move pulled object onto conveyor
-/obj/machinery/conveyor/attack_hand(mob/user)
+/obj/machinery/conveyor/attack_hand(mob/user, list/modifiers)
 	. = ..()
 	if(.)
 		return

@@ -57,7 +57,7 @@
 	..(amount)
 
 //can't equip anything
-/mob/living/carbon/alien/larva/attack_ui(slot_id)
+/mob/living/carbon/alien/larva/attack_ui(slot_id, params)
 	return
 
 // new damage icon system
@@ -67,14 +67,6 @@
 	return
 
 /mob/living/carbon/alien/larva/start_pulling(atom/movable/AM, state, force = move_force, supress_message = FALSE)
-	return
-
-/mob/living/carbon/alien/larva/stripPanelUnequip(obj/item/what, mob/who)
-	to_chat(src, span_warning("You don't have the dexterity to do this!"))
-	return
-
-/mob/living/carbon/alien/larva/stripPanelEquip(obj/item/what, mob/who)
-	to_chat(src, span_warning("You don't have the dexterity to do this!"))
 	return
 
 /mob/living/carbon/alien/larva/canBeHandcuffed()

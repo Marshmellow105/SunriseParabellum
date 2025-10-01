@@ -21,7 +21,7 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/mirror)
 	if(icon_state == "mirror_broke" && !broken)
 		atom_break(null, mapload)
 
-/obj/structure/mirror/attack_hand(mob/user)
+/obj/structure/mirror/attack_hand(mob/user, list/modifiers)
 	. = ..()
 	if(.)
 		return
@@ -75,7 +75,7 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/mirror)
 	qdel(src)
 
 /obj/structure/mirror/welder_act(mob/living/user, obj/item/I)
-	if(user.a_intent == INTENT_HARM)
+	if(user.combat_mode)
 		return FALSE
 
 	if(!broken)
@@ -128,7 +128,7 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/mirror)
 			choosable_races += initial(S.id)
 	return ..()
 
-/obj/structure/mirror/magic/attack_hand(mob/user)
+/obj/structure/mirror/magic/attack_hand(mob/user, list/modifiers)
 	. = ..()
 	if(.)
 		return
@@ -186,6 +186,7 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/mirror)
 
 					if(ReadHSV(temp_hsv)[3] >= ReadHSV("#7F7F7F")[3]) // mutantcolors must be bright
 						H.dna.features["mcolor"] = sanitize_hexcolor(new_mutantcolor)
+						H.dna.update_uf_block(DNA_MUTANT_COLOR_BLOCK)
 
 					else
 						to_chat(H, span_notice("Invalid color. Your color is not bright enough."))

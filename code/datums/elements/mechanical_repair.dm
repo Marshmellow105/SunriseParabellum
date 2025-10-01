@@ -8,20 +8,20 @@
 	. = ..()
 	if(!ishuman(target))
 		return ELEMENT_INCOMPATIBLE
-	RegisterSignal(target, COMSIG_PARENT_ATTACKBY, PROC_REF(try_repair))
+	RegisterSignal(target, COMSIG_ATOM_ATTACKBY, PROC_REF(try_repair))
 
 /datum/element/mechanical_repair/Detach(datum/source, ...)
 	. = ..()
-	UnregisterSignal(source, COMSIG_PARENT_ATTACKBY)
+	UnregisterSignal(source, COMSIG_ATOM_ATTACKBY)
 
-/datum/element/mechanical_repair/proc/try_repair(datum/source, obj/item/I, mob/user)
+/datum/element/mechanical_repair/proc/try_repair(datum/source, obj/item/I, mob/living/user)
 	var/mob/living/carbon/human/target = source
 
 	if(!istype(I, /obj/item/stack/cable_coil) && I.tool_behaviour != TOOL_WELDER)
 		return
 
 	// Check to make sure we can repair
-	if(user.a_intent == INTENT_HARM)
+	if(user.combat_mode)
 		return
 
 	if(target in user.do_afters)

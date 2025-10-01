@@ -28,9 +28,9 @@
 
 /obj/item/mob_lasso/proc/init_whitelists()
 	whitelist_mob_cache[type] = typecacheof(list(/mob/living/simple_animal/hostile/carp, /mob/living/simple_animal/hostile/carp/megacarp, /mob/living/simple_animal/hostile/carp/lia,\
-	/mob/living/simple_animal/cow, /mob/living/simple_animal/hostile/retaliate/dolphin), only_root_path = TRUE)
+	/mob/living/basic/cow, /mob/living/simple_animal/hostile/retaliate/dolphin), only_root_path = TRUE)
 
-/obj/item/mob_lasso/afterattack(atom/target, mob/user, proximity_flag, click_parameters)
+/obj/item/mob_lasso/afterattack(atom/target, mob/living/user, proximity_flag, click_parameters)
 	. = ..()
 	var/failed = FALSE
 	if(!isliving(target))
@@ -51,7 +51,7 @@
 	if(IS_DEAD_OR_INCAP(C))
 		to_chat(user, span_warning("[target] is dead."))
 		return
-	if(user.a_intent == INTENT_HELP && C == mob_target) //if trying to tie up previous target
+	if(!user.combat_mode && C == mob_target) //if trying to tie up previous target
 		to_chat(user, span_notice("You begin to untie [C]"))
 		if(proximity_flag && do_after(user, 2 SECONDS, target, timed_action_flags = IGNORE_HELD_ITEM))
 			user.faction |= "carpboy_[user]"
@@ -60,10 +60,10 @@
 			C.faction |= user.faction
 			C.transform = transform.Turn(0)
 			C.toggle_ai(AI_ON)
-			var/datum/component/tamed_command/T = C.AddComponent(/datum/component/tamed_command)
-			T.add_ally(user)
+			//var/datum/component/tamed_command/T = C.AddComponent(/datum/component/tamed_command)
+			//T.add_ally(user)
 			to_chat(user, span_notice("[C] nuzzles you."))
-			UnregisterSignal(mob_target, COMSIG_PARENT_QDELETING)
+			UnregisterSignal(mob_target, COMSIG_QDELETING)
 			mob_target = null
 			if(timer)
 				deltimer(timer)
@@ -83,7 +83,7 @@
 	C.throw_at(get_turf(src), 9, 2, user, FALSE, force = 0)
 	C.transform = transform.Turn(180)
 	C.toggle_ai(AI_OFF)
-	RegisterSignal(C, COMSIG_PARENT_QDELETING, PROC_REF(handle_hard_del), override=TRUE)
+	RegisterSignal(C, COMSIG_QDELETING, PROC_REF(handle_hard_del), override=TRUE)
 	to_chat(user, span_notice("You lasso [C]!"))
 	timer = addtimer(CALLBACK(src, PROC_REF(fail_ally)), 6 SECONDS, TIMER_STOPPABLE) //after 6 seconds set the carp back
 
@@ -96,7 +96,7 @@
 	visible_message(span_warning("[mob_target] breaks free!"))
 	mob_target.transform = transform.Turn(0)
 	mob_target.toggle_ai(AI_ON)
-	UnregisterSignal(mob_target, COMSIG_PARENT_QDELETING)
+	UnregisterSignal(mob_target, COMSIG_QDELETING)
 	mob_target = null
 	timer = null
 

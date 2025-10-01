@@ -20,7 +20,10 @@
 	var/opened = FALSE
 	var/welded = FALSE
 	var/locked = FALSE
-	var/divable = TRUE //controls whether someone with skittish trait can enter the closet with CtrlShiftClick
+	/// Whether a skittish person can dive inside this closet. Disable if opening the closet causes "bad things" to happen or that it leads to a logical inconsistency.
+	var/divable = TRUE
+	/// true whenever someone with the strong pull component (or magnet modsuit module) is dragging this, preventing opening
+	var/strong_grab = FALSE
 	var/large = TRUE
 	var/wall_mounted = 0 //never solid (You can always pass over it)
 	var/breakout_time = 1200
@@ -138,7 +141,7 @@
 	ADD_LUM_SOURCE(src, LUM_SOURCE_MANAGED_OVERLAY)
 	. += locked ? icon_locked : icon_unlocked
 
-/obj/structure/closet/proc/animate_door(var/closing = FALSE)
+/obj/structure/closet/proc/animate_door(closing = FALSE)
 	if(!door_anim_time)
 		return
 	if(!door_obj) door_obj = new
@@ -185,11 +188,29 @@
 	if(opened)
 		. += span_notice("The parts are <b>welded</b> together.")
 	else if(secure && !opened)
-		. += span_notice("Alt-click to [locked ? "unlock" : "lock"].")
+		. += "<span class='notice'>Right-click to [locked ? "unlock" : "lock"].</span>"
 	if(isliving(user))
 		var/mob/living/L = user
 		if(divable && HAS_TRAIT(L, TRAIT_SKITTISH))
 			. += span_notice("Ctrl-Shift-click [src] to jump inside.")
+
+/obj/structure/closet/add_context_self(datum/screentip_context/context, mob/user)
+
+	if(secure && !broken)
+		context.add_alt_click_action("[opened ? "Lock" : "Unlock"]")
+	if(!welded)
+		context.add_left_click_action("[opened ? "Close" : "Open"]")
+
+	if(opened)
+		context.add_left_click_tool_action("Deconstruct", TOOL_WELDER)
+	else
+		if(!welded && can_weld_shut)
+			context.add_left_click_tool_action("Weld", TOOL_WELDER)
+		else if(welded)
+			context.add_left_click_tool_action("Unweld", TOOL_WELDER)
+
+	if(anchorable)
+		context.add_left_click_tool_action("[anchored ? "Unanchor" : "Anchor"]", TOOL_WRENCH)
 
 /obj/structure/closet/CanAllowThrough(atom/movable/mover, border_dir)
 	. = ..()
@@ -211,6 +232,8 @@
 	var/turf/T = get_turf(src)
 	for(var/obj/structure/closet/closet in T)
 		if(closet != src && !closet.wall_mounted)
+			if(user)
+				balloon_alert(user, "[closet.name] is in the way!")
 			return FALSE
 	for(var/mob/living/L in T)
 		if(L.anchored || horizontal && L.mob_size > MOB_SIZE_TINY && L.density)
@@ -234,6 +257,8 @@
 
 /obj/structure/closet/proc/take_contents()
 	var/atom/L = drop_location()
+	if(!L)
+		return
 	for(var/atom/movable/AM in L)
 		if(AM != src && insert(AM) == -1) // limit reached
 			break
@@ -341,7 +366,7 @@
 	else
 		return ..()
 
-/obj/structure/closet/proc/tool_interact(obj/item/W, mob/user)//returns TRUE if attackBy call shouldn't be continued (because tool was used/closet was of wrong type), FALSE if otherwise
+/obj/structure/closet/proc/tool_interact(obj/item/W, mob/living/user)//returns TRUE if attackBy call shouldn't be continued (because tool was used/closet was of wrong type), FALSE if otherwise
 	. = TRUE
 	if(opened)
 		if(W.tool_behaviour == cutting_tool)
@@ -363,6 +388,8 @@
 									span_notice("You cut \the [src] apart with \the [W]."))
 				deconstruct(TRUE)
 				return
+		if (user.combat_mode)
+			return FALSE
 		if(user.transferItemToLoc(W, drop_location())) // so we put in unlit welder too
 			return
 	else if(W.tool_behaviour == TOOL_WELDER && can_weld_shut)
@@ -379,15 +406,8 @@
 							span_notice("You [welded ? "weld" : "unwelded"] \the [src] with \the [W]."),
 							span_italics("You hear welding."))
 			update_icon()
-	else if(W.tool_behaviour == TOOL_WRENCH && anchorable)
-		if(isinspace() && !anchored)
-			return
-		set_anchored(!anchored)
-		W.play_tool_sound(src, 75)
-		user.visible_message(span_notice("[user] [anchored ? "anchored" : "unanchored"] \the [src] [anchored ? "to" : "from"] the ground."), \
-						span_notice("You [anchored ? "anchored" : "unanchored"] \the [src] [anchored ? "to" : "from"] the ground."), \
-						span_italics("You hear a ratchet."))
-	else if(user.a_intent != INTENT_HARM)
+
+	else if(!user.combat_mode)
 		var/item_is_id = W.GetID()
 		if(!item_is_id)
 			return FALSE
@@ -395,6 +415,18 @@
 			togglelock(user)
 	else
 		return FALSE
+
+/obj/structure/closet/wrench_act_secondary(mob/living/user, obj/item/tool)
+	if(!anchorable)
+		balloon_alert(user, "no anchor bolts!")
+		return TRUE
+	if(isinspace() && !anchored) // We want to prevent anchoring a locker in space, but we should still be able to unanchor it there
+		balloon_alert(user, "nothing to anchor to!")
+		return TRUE
+	set_anchored(!anchored)
+	tool.play_tool_sound(src, 75)
+	user.balloon_alert_to_viewers("[anchored ? "anchored" : "unanchored"]")
+	return TRUE
 
 /obj/structure/closet/proc/after_weld(weld_state)
 	return
@@ -468,6 +500,12 @@
 	if(user.Adjacent(src))
 		return attack_hand(user)
 
+/obj/structure/closet/attack_robot_secondary(mob/user, list/modifiers)
+	if(!user.Adjacent(src))
+		return SECONDARY_ATTACK_CONTINUE_CHAIN
+	togglelock(user)
+	return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
+
 // tk grab then use on self
 /obj/structure/closet/attack_self_tk(mob/user)
 	if(attack_hand(user))
@@ -531,13 +569,15 @@
 	broken = TRUE //applies to secure lockers only
 	open()
 
-/obj/structure/closet/AltClick(mob/user)
+/obj/structure/closet/attack_hand_secondary(mob/user, modifiers)
+	. = ..()
+
 	if(!user.canUseTopic(src, BE_CLOSE) || !isturf(loc))
 		return
-	if(opened || !secure)
-		return
-	else
+
+	if(!opened && secure)
 		togglelock(user)
+		return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
 
 /obj/structure/closet/CtrlShiftClick(mob/living/user)
 	if(!(divable && HAS_TRAIT(user, TRAIT_SKITTISH)))
@@ -642,7 +682,7 @@
 		togglelock(user)
 		T1.visible_message(span_warning("[user] dives into [src]!"))
 
-/obj/structure/closet/on_object_saved(var/depth = 0)
+/obj/structure/closet/on_object_saved(depth = 0)
 	// Generate the contents if we haven't already
 	if (!contents_initialised)
 		PopulateContents()

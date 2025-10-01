@@ -50,7 +50,7 @@
 		L.sec_hud_set_implants()
 	user.cut_overlay(psychic_overlay)
 
-/obj/item/clothing/head/costume/foilhat/attack_hand(mob/user)
+/obj/item/clothing/head/costume/foilhat/attack_hand(mob/user, list/modifiers)
 	if(iscarbon(user))
 		var/mob/living/carbon/C = user
 		if(src == C.head)
@@ -76,7 +76,7 @@
 	actions_types = list(/datum/action/item_action/toggle_helmet_light)
 	dynamic_hair_suffix = ""
 	dynamic_fhair_suffix = ""
-	flash_protect = 2
+	flash_protect = FLASH_PROTECTION_WELDER
 	flags_cover = HEADCOVERSEYES | HEADCOVERSMOUTH
 	bang_protect = 1 //make this consistent with other plasmaman helmets
 	resistance_flags = NONE

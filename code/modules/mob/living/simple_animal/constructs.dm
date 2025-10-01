@@ -15,7 +15,7 @@
 	icon = 'icons/mob/cult.dmi'
 	speed = 0
 	spacewalk = TRUE
-	a_intent = INTENT_HARM
+	combat_mode = TRUE
 	stop_automated_movement = 1
 	status_flags = CANPUSH
 	attack_sound = 'sound/weapons/punch1.ogg'
@@ -36,7 +36,6 @@
 	del_on_death = TRUE
 	initial_language_holder = /datum/language_holder/construct
 	deathmessage = "collapses in a shattered heap."
-	hud_type = /datum/hud/constructs
 	hardattacks = TRUE
 	var/list/construct_spells = list()
 	var/playstyle_string = span_bigbold("You are a generic construct!") + "<b> Your job is to not exist, and you should probably adminhelp this.</b>"
@@ -84,7 +83,15 @@
 /mob/living/simple_animal/hostile/construct/examine(mob/user)
 	var/t_He = p_they(TRUE)
 	var/t_s = p_s()
-	. = list("<span class='cult'>This is [icon2html(src, user)] \a <b>[src]</b>!\n[desc]")
+	var/text_span
+	switch(theme)
+		if(THEME_CULT)
+			text_span = "cult"
+		if(THEME_WIZARD)
+			text_span = "purple"
+		if(THEME_HOLY)
+			text_span = "blue"
+	. = list("<span class='[text_span]'>This is [icon2html(src, user)] \a <b>[src]</b>!\n[desc]")
 	if(health < maxHealth)
 		if(health >= maxHealth/2)
 			. += span_warning("[t_He] look[t_s] slightly dented.")
@@ -121,11 +128,6 @@
 
 /mob/living/simple_animal/hostile/construct/electrocute_act(shock_damage, source, siemens_coeff = 1, flags = NONE)
 	return 0
-
-/mob/living/simple_animal/hostile/construct/adjustHealth(amount, updating_health = TRUE, forced = FALSE)
-	. = ..()
-	if(updating_health)
-		update_health_hud()
 
 /////////////////Juggernaut///////////////
 /mob/living/simple_animal/hostile/construct/juggernaut
@@ -232,9 +234,10 @@
 
 /mob/living/simple_animal/hostile/construct/wraith/AttackingTarget() //refund jaunt cooldown when attacking living targets
 	var/prev_stat
-	if(isliving(target) && !iscultist(target))
+	if(isliving(target))
 		var/mob/living/L = target
-		prev_stat = L.stat
+		if(!IS_CULTIST(L))
+			prev_stat = L.stat
 
 	. = ..()
 
@@ -330,7 +333,7 @@
 	if(Found(the_target) || ..()) //If we Found it or Can_Attack it normally, we Can_Attack it as long as it wasn't invisible
 		return 1 //as a note this shouldn't be added to base hostile mobs because it'll mess up retaliate hostile mobs
 
-/mob/living/simple_animal/hostile/construct/artificer/MoveToTarget(var/list/possible_targets)
+/mob/living/simple_animal/hostile/construct/artificer/MoveToTarget(list/possible_targets)
 	..()
 	if(isliving(target))
 		var/mob/living/L = target
@@ -492,7 +495,7 @@
 	var/mob/living/simple_animal/hostile/construct/the_construct
 
 
-/datum/action/innate/seek_master/Grant(var/mob/living/C)
+/datum/action/innate/seek_master/Grant(mob/living/C)
 	the_construct = C
 	..()
 
@@ -529,7 +532,7 @@
 	button_icon_state = "cult_mark"
 
 /datum/action/innate/seek_prey/on_activate()
-	if(GLOB.cult_narsie == null)
+	if(GLOB.narsie == null)
 		return
 	var/mob/living/simple_animal/hostile/construct/harvester/the_construct = owner
 	if(the_construct.seeking)
@@ -539,8 +542,8 @@
 		to_chat(the_construct, span_cultitalic("You are now tracking Nar'Sie, return to reap the harvest!"))
 		return
 	else
-		if(LAZYLEN(GLOB.cult_narsie.souls_needed))
-			the_construct.master = pick(GLOB.cult_narsie.souls_needed)
+		if(LAZYLEN(GLOB.narsie.souls_needed))
+			the_construct.master = pick(GLOB.narsie.souls_needed)
 			var/mob/living/real_target = the_construct.master //We can typecast this way because Narsie only allows /mob/living into the souls list
 			to_chat(the_construct, span_cultitalic("You are now tracking your prey, [real_target.real_name] - harvest [real_target.p_them()]!"))
 		else
@@ -549,21 +552,3 @@
 		desc = "Activate to track Nar'Sie!"
 		button_icon_state = "sintouch"
 		the_construct.seeking = TRUE
-
-
-/////////////////////////////ui stuff/////////////////////////////
-
-/mob/living/simple_animal/hostile/construct/update_health_hud()
-	if(hud_used)
-		if(health >= maxHealth)
-			hud_used.healths.icon_state = "[icon_state]_health0"
-		else if(health > maxHealth*0.8)
-			hud_used.healths.icon_state = "[icon_state]_health2"
-		else if(health > maxHealth*0.6)
-			hud_used.healths.icon_state = "[icon_state]_health3"
-		else if(health > maxHealth*0.4)
-			hud_used.healths.icon_state = "[icon_state]_health4"
-		else if(health > maxHealth*0.2)
-			hud_used.healths.icon_state = "[icon_state]_health5"
-		else
-			hud_used.healths.icon_state = "[icon_state]_health6"

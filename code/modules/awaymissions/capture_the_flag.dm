@@ -40,10 +40,7 @@
 	if(!reset)
 		reset = new reset_path(get_turf(src))
 		reset.flag = src
-	RegisterSignal(src, COMSIG_PARENT_PREQDELETED, PROC_REF(reset_flag)) //just in case CTF has some map hazards (read: chasms).
-
-/obj/item/ctf/ComponentInitialize()
-	. = ..()
+	RegisterSignal(src, COMSIG_PREQDELETED, PROC_REF(reset_flag)) //just in case CTF has some map hazards (read: chasms).
 	AddComponent(/datum/component/two_handed, require_twohands = TRUE)
 
 /obj/item/ctf/process()
@@ -314,7 +311,7 @@
 	recently_dead_ckeys += body.ckey
 	addtimer(CALLBACK(src, PROC_REF(clear_cooldown), body.ckey), respawn_cooldown, TIMER_UNIQUE)
 
-/obj/machinery/capture_the_flag/proc/clear_cooldown(var/ckey)
+/obj/machinery/capture_the_flag/proc/clear_cooldown(ckey)
 	recently_dead_ckeys -= ckey
 
 /obj/machinery/capture_the_flag/proc/spawn_team_member(client/new_team_member)
@@ -343,7 +340,7 @@
 	M.key = new_team_member.key
 	M.faction += team
 	M.equipOutfit(chosen_class)
-	RegisterSignal(M, COMSIG_PARENT_QDELETING, PROC_REF(ctf_qdelled_player)) //just in case CTF has some map hazards (read: chasms). bit shorter than dust
+	RegisterSignal(M, COMSIG_QDELETING, PROC_REF(ctf_qdelled_player)) //just in case CTF has some map hazards (read: chasms). bit shorter than dust
 	spawned_mobs[M] = chosen_class
 	team_members |= new_team_member.ckey
 	return M //used in medisim.dm
@@ -406,7 +403,7 @@
 
 	dead_barricades.Cut()
 
-	notify_ghosts("[name] has been activated!", enter_link="<a href=?src=[REF(src)];join=1>(Click to join the [team] team!)</a> or click on the controller directly!", source = src, action=NOTIFY_ATTACK, header = "CTF has been activated")
+	notify_ghosts("[name] has been activated!", enter_link="<a href='byond://?src=[REF(src)];join=1'>(Click to join the [team] team!)</a> or click on the controller directly!", source = src, action=NOTIFY_ATTACK, header = "CTF has been activated")
 
 	if(!arena_reset)
 		reset_the_arena()
@@ -569,9 +566,8 @@
 	ears = /obj/item/radio/headset
 	uniform = /obj/item/clothing/under/syndicate
 	suit = /obj/item/clothing/suit/armor/vest/ctf
-	toggle_helmet = FALSE // see the whites of their eyes
 	shoes = /obj/item/clothing/shoes/combat
-	gloves = /obj/item/clothing/gloves/combat
+	gloves = /obj/item/clothing/gloves/tackler/combat
 	id = /obj/item/card/id/syndicate
 	belt = /obj/item/gun/ballistic/automatic/pistol/deagle/ctf
 	l_pocket = /obj/item/ammo_box/magazine/recharge/ctf
@@ -774,7 +770,7 @@
 /obj/machinery/control_point/attackby(mob/user, params)
 	capture(user)
 
-/obj/machinery/control_point/attack_hand(mob/user)
+/obj/machinery/control_point/attack_hand(mob/user, list/modifiers)
 	. = ..()
 	if(.)
 		return

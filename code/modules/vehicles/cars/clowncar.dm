@@ -9,7 +9,6 @@
 	movedelay = 0.6
 	car_traits = CAN_KIDNAP
 	key_type = /obj/item/bikehorn
-	key_type_exact = FALSE
 	var/droppingoil = FALSE
 	var/RTDcooldown = 150
 	var/lastRTDtime = 0
@@ -30,6 +29,14 @@
 	. = ..()
 	initialize_controller_action_type(/datum/action/vehicle/sealed/horn/clowncar, VEHICLE_CONTROL_DRIVE)
 	initialize_controller_action_type(/datum/action/vehicle/sealed/Thank, VEHICLE_CONTROL_KIDNAPPED)
+
+/obj/vehicle/sealed/car/clowncar/relaymove(mob/living/user, direction)
+	if(!ishuman(user))
+		return FALSE
+	var/mob/living/carbon/human/rider = user
+	if(rider.mind?.assigned_role != JOB_NAME_CLOWN) //Only clowns can drive the car.
+		return FALSE
+	return ..()
 
 /obj/vehicle/sealed/car/clowncar/auto_assign_occupant_flags(mob/M)
 	if(ishuman(M))
@@ -128,7 +135,7 @@
 	playsound(src, 'sound/vehicles/clowncar_fart.ogg', 100)
 	return ..()
 
-/obj/vehicle/sealed/car/clowncar/after_move(direction)
+/obj/vehicle/sealed/car/clowncar/Move(newloc, dir)
 	. = ..()
 	if(droppingoil)
 		new /obj/effect/decal/cleanable/oil/slippery(loc)

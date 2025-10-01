@@ -15,7 +15,7 @@
 	flags_1 = PREVENT_CONTENTS_EXPLOSION_1 // So our equipment doesn't go poof
 	mouse_opacity = MOUSE_OPACITY_ICON
 	faction = list(FACTION_NEUTRAL)
-	a_intent = INTENT_HARM
+	combat_mode = TRUE
 	hud_type = /datum/hud/minebot
 	// Atmos
 	atmos_requirements = list("min_oxy" = 0, "max_oxy" = 0, "min_tox" = 0, "max_tox" = 0, "min_co2" = 0, "max_co2" = 0, "min_n2" = 0, "max_n2" = 0)
@@ -62,6 +62,7 @@
 	. = ..()
 
 	AddElement(/datum/element/footstep, FOOTSTEP_OBJ_ROBOT, 1, -6, vary = TRUE)
+	ADD_TRAIT(src, TRAIT_ADVANCEDTOOLUSER, ROUNDSTART_TRAIT)
 
 	// Setup equipment
 	stored_pka = new(src)
@@ -69,9 +70,9 @@
 	stored_scanner = new /obj/item/t_scanner/adv_mining_scanner/lesser(src) // No full-power scanner right off the bat
 
 	// Keep track of our equipment
-	RegisterSignal(stored_pka, COMSIG_PARENT_QDELETING, PROC_REF(on_pka_qdel))
-	RegisterSignal(stored_drill, COMSIG_PARENT_QDELETING, PROC_REF(on_drill_qdel))
-	RegisterSignal(stored_scanner, COMSIG_PARENT_QDELETING, PROC_REF(on_scanner_qdel))
+	RegisterSignal(stored_pka, COMSIG_QDELETING, PROC_REF(on_pka_qdel))
+	RegisterSignal(stored_drill, COMSIG_QDELETING, PROC_REF(on_drill_qdel))
+	RegisterSignal(stored_scanner, COMSIG_QDELETING, PROC_REF(on_scanner_qdel))
 
 	// Setup actions
 	var/datum/action/innate/minedrone/toggle_light/toggle_light_action = new()
@@ -141,7 +142,7 @@
 	. += span_notice("Field repairs can be performed with a welder.")
 	if(stored_pka && stored_pka.max_mod_capacity)
 		. += span_notice("\The [stored_pka] has <b>[stored_pka.get_remaining_mod_capacity()]%</b> mod capacity remaining.")
-		for(var/A as anything in stored_pka.get_modkits())
+		for(var/A as anything in stored_pka.modkits)
 			var/obj/item/borg/upgrade/modkit/M = A
 			. += span_notice("There is \a [M] installed, using <b>[M.cost]%</b> capacity.")
 	if(stored_cutter)
@@ -192,10 +193,10 @@
 	check_friendly_fire = FALSE
 
 /// Handles installing new tools/upgrades and interacting with the minebot
-/mob/living/simple_animal/hostile/mining_drone/attackby(obj/item/item, mob/user, params)
+/mob/living/simple_animal/hostile/mining_drone/attackby(obj/item/item, mob/living/user, params)
 	if(user == src)
 		return TRUE // Returning true in most cases prevents afterattacks from going off and whacking/shooting the minebot
-	if(user.a_intent != INTENT_HELP)
+	if(user.combat_mode)
 		return ..() // For smacking
 	if(istype(item, /obj/item/minebot_upgrade))
 		if(!do_after(user, 20, src))
@@ -207,10 +208,10 @@
 		if(!do_after(user, 20, src))
 			return TRUE
 		stored_scanner.forceMove(get_turf(src))
-		UnregisterSignal(stored_scanner, COMSIG_PARENT_QDELETING)
+		UnregisterSignal(stored_scanner, COMSIG_QDELETING)
 		item.forceMove(src)
 		stored_scanner = item
-		RegisterSignal(stored_scanner, COMSIG_PARENT_QDELETING, PROC_REF(on_scanner_qdel))
+		RegisterSignal(stored_scanner, COMSIG_QDELETING, PROC_REF(on_scanner_qdel))
 		to_chat(user, span_info("You install [item]."))
 		return TRUE
 	if(istype(item, /obj/item/borg/upgrade/modkit))
@@ -230,10 +231,10 @@
 		if(stored_cutter)
 			stored_cutter.forceMove(get_turf(src))
 			stored_cutter.requires_wielding = initial(stored_cutter.requires_wielding)
-			UnregisterSignal(stored_cutter, COMSIG_PARENT_QDELETING)
+			UnregisterSignal(stored_cutter, COMSIG_QDELETING)
 		item.forceMove(src)
 		stored_cutter = item
-		RegisterSignal(stored_cutter, COMSIG_PARENT_QDELETING, PROC_REF(on_cutter_qdel))
+		RegisterSignal(stored_cutter, COMSIG_QDELETING, PROC_REF(on_cutter_qdel))
 		stored_cutter.requires_wielding = FALSE // Prevents inaccuracy when firing for the minebot.
 		to_chat(user, span_info("You install [item]."))
 		return TRUE
@@ -242,10 +243,10 @@
 			return TRUE
 		if(stored_drill)
 			stored_drill.forceMove(get_turf(src))
-			UnregisterSignal(stored_drill, COMSIG_PARENT_QDELETING)
+			UnregisterSignal(stored_drill, COMSIG_QDELETING)
 		item.forceMove(src)
 		stored_drill = item
-		RegisterSignal(stored_drill, COMSIG_PARENT_QDELETING, PROC_REF(on_drill_qdel))
+		RegisterSignal(stored_drill, COMSIG_QDELETING, PROC_REF(on_drill_qdel))
 		to_chat(user, span_info("You install [item]."))
 		return TRUE
 	..()
@@ -254,22 +255,22 @@
 // Procs handling deletion of items
 /mob/living/simple_animal/hostile/mining_drone/proc/on_scanner_qdel()
 	SIGNAL_HANDLER
-	UnregisterSignal(stored_scanner, COMSIG_PARENT_QDELETING)
+	UnregisterSignal(stored_scanner, COMSIG_QDELETING)
 	stored_scanner = null
 
 /mob/living/simple_animal/hostile/mining_drone/proc/on_drill_qdel()
 	SIGNAL_HANDLER
-	UnregisterSignal(stored_drill, COMSIG_PARENT_QDELETING)
+	UnregisterSignal(stored_drill, COMSIG_QDELETING)
 	stored_drill = null
 
 /mob/living/simple_animal/hostile/mining_drone/proc/on_pka_qdel(datum/source, forced)
 	SIGNAL_HANDLER
-	UnregisterSignal(stored_pka, COMSIG_PARENT_QDELETING)
+	UnregisterSignal(stored_pka, COMSIG_QDELETING)
 	stored_pka = null
 
 /mob/living/simple_animal/hostile/mining_drone/proc/on_cutter_qdel()
 	SIGNAL_HANDLER
-	UnregisterSignal(stored_cutter, COMSIG_PARENT_QDELETING)
+	UnregisterSignal(stored_cutter, COMSIG_QDELETING)
 	stored_cutter = null
 
 /// EMPs stun and do some damage
@@ -286,7 +287,7 @@
 
 /// Handles humans toggling minebot modes
 /mob/living/simple_animal/hostile/mining_drone/attack_hand(mob/living/carbon/human/user)
-	if(user.a_intent != INTENT_HELP) // Smacking/grabbing
+	if(user.combat_mode) // Smacking/grabbing
 		return ..()
 	if(client) // No messing with the minebot while there's a player inside it.
 		to_chat(user, span_info("[src]'s equipment is currently slaved to its onboard AI. Best not to touch it."))
@@ -327,7 +328,7 @@
 	if(istype(mover, /obj/projectile/kinetic))
 		var/obj/projectile/kinetic/kinetic_proj = mover
 		if(kinetic_proj.kinetic_gun)
-			for(var/A as anything in kinetic_proj.kinetic_gun.get_modkits())
+			for(var/A as anything in kinetic_proj.kinetic_gun.modkits)
 				var/obj/item/borg/upgrade/modkit/modkit = A
 				if(istype(modkit, /obj/item/borg/upgrade/modkit/minebot_passthrough))
 					return TRUE
@@ -389,7 +390,7 @@
 	. = ..()
 
 /// Effectively the same as standard target listing
-/mob/living/simple_animal/hostile/mining_drone/ListTargetsLazy(var/_Z)
+/mob/living/simple_animal/hostile/mining_drone/ListTargetsLazy(_Z)
 	if(mode == MODE_MINING)
 		return ListTargets()
 	. = ..()
@@ -488,10 +489,6 @@
 	for(var/obj/item/minebot_upgrade/upgrade as anything in installed_upgrades)
 		upgrade.unequip()
 
-/// Allows a minebot to use things like plasma cutters.
-/mob/living/simple_animal/hostile/mining_drone/IsAdvancedToolUser()
-	return TRUE // Allow
-
 /**********************Minebot Actions**********************/
 // Used when a player's in control of a minebot.
 
@@ -580,7 +577,8 @@
 	var/mob/living/simple_animal/hostile/mining_drone/linked_bot
 
 /obj/item/minebot_upgrade/Destroy()
-	unequip()
+	if (linked_bot)
+		unequip()
 	return ..()
 
 /// Handles adding upgrades. This checks for any duplicate mods and links the mod to the minebot. Returns FALSE if the upgrade fails, otherwise returns TRUE

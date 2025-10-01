@@ -48,7 +48,7 @@
 	stop_delayed_death()
 	if(!QDELETED(team_monitor))
 		team_monitor.hide_hud(owner.current)
-		team_monitor.RemoveComponent()
+		team_monitor.ClearFromParent()
 		QDEL_NULL(team_monitor)
 	if(!QDELETED(monitor_holder))
 		QDEL_NULL(monitor_holder)
@@ -201,17 +201,17 @@
 		new_body.adjustToxLoss(rand(40, 55), updating_health = FALSE, forced = TRUE)
 	else
 		new_body.adjustCloneLoss(rand(40, 55), updating_health = FALSE)
-	var/obj/item/organ/brain/brain = new_body.getorganslot(ORGAN_SLOT_BRAIN)
+	var/obj/item/organ/brain/brain = new_body.get_organ_slot(ORGAN_SLOT_BRAIN)
 	if(!istype(brain) || brain.decoy_override)
-		var/obj/item/organ/heart = new_body.getorganslot(ORGAN_SLOT_HEART)
+		var/obj/item/organ/heart = new_body.get_organ_slot(ORGAN_SLOT_HEART)
 		if(!heart)
 			// damn you, heartless bastard!!
 			for(var/obj/item/organ/organ in new_body.internal_organs)
-				organ.applyOrganDamage(rand(20, 40), organ.maxHealth - 1)
+				organ.apply_organ_damage(rand(20, 40), organ.maxHealth - 1)
 		else
-			heart.applyOrganDamage(rand(20, 40), heart.maxHealth - 1)
+			heart.apply_organ_damage(rand(20, 40), heart.maxHealth - 1)
 	else
-		brain.applyOrganDamage(rand(20, 40), HOLOPARA_MAX_BRAIN_DAMAGE)
+		brain.apply_organ_damage(rand(20, 40), HOLOPARA_MAX_BRAIN_DAMAGE)
 	// straight to stamcrit with you!!
 	new_body.take_overall_damage(stamina = rand(new_body.maxHealth * 1.1, new_body.maxHealth * 1.5), updating_health = TRUE)
 	if(new_body.confused < 120)
@@ -394,7 +394,7 @@
 	remove_all_tracking_huds()
 	if(!QDELETED(team_monitor))
 		team_monitor.hide_hud(body)
-		team_monitor.RemoveComponent()
+		team_monitor.ClearFromParent()
 		QDEL_NULL(team_monitor)
 	if(!QDELETED(monitor_holder))
 		QDEL_NULL(monitor_holder)

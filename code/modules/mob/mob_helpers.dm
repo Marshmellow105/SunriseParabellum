@@ -293,101 +293,29 @@
 	firstname.Find(real_name)
 	return firstname.match
 
-
-/**
-  * change a mob's act-intent.
-  *
-  * Input the intent as a string such as "help" or use "right"/"left
-  */
-/mob/verb/a_intent_change(input as text)
-	set name = "a-intent"
-	set hidden = 1
-
-	if(!possible_a_intents || !possible_a_intents.len)
-		return
-
-	if(input in possible_a_intents)
-		a_intent = input
-	else
-		var/current_intent = possible_a_intents.Find(a_intent)
-
-		if(!current_intent)
-			// Failsafe. Just in case some badmin was playing with VV.
-			current_intent = 1
-
-		if(input == INTENT_HOTKEY_RIGHT)
-			current_intent += 1
-		if(input == INTENT_HOTKEY_LEFT)
-			current_intent -= 1
-
-		// Handle looping
-		if(current_intent < 1)
-			current_intent = possible_a_intents.len
-		if(current_intent > possible_a_intents.len)
-			current_intent = 1
-
-		a_intent = possible_a_intents[current_intent]
-
-	if(hud_used && hud_used.action_intent)
-		hud_used.action_intent.icon_state = "[a_intent]"
-
 ///Checks if the mob is able to see or not. eye_blind is temporary blindness, the trait is if they're permanently blind.
 /mob/proc/is_blind()
 	SHOULD_BE_PURE(TRUE)
 	return eye_blind ? TRUE : HAS_TRAIT(src, TRAIT_BLIND)
 
-///Is the mob hallucinating?
-/mob/proc/hallucinating()
-	return FALSE
-
-
 // moved out of admins.dm because things other than admin procs were calling this.
-/**
-  * Is this mob special to the gamemode?
-  *
-  * returns 1 for special characters and 2 for heroes of gamemode
-  *
-  */
+/// Returns TRUE if the game has started and we're either an AI with a 0th law, or we're someone with a special role/antag datum
 /proc/is_special_character(mob/M)
 	if(!SSticker.HasRoundStarted())
 		return FALSE
 	if(!istype(M))
 		return FALSE
-	if(issilicon(M))
-		if(iscyborg(M)) //For cyborgs, returns 1 if the cyborg has a law 0 and special_role. Returns 0 if the borg is merely slaved to an AI traitor.
-			return FALSE
-		else if(isAI(M))
-			var/mob/living/silicon/ai/A = M
-			if(A.laws && A.laws.zeroth && A.mind && A.mind.special_role)
-				return TRUE
+	if(iscyborg(M)) //as a borg you're now beholden to your laws rather than greentext
 		return FALSE
-	if(M.mind && M.mind.special_role)//If they have a mind and special role, they are some type of traitor or antagonist.
-		switch(SSticker.mode.config_tag)
-			if("revolution")
-				if(is_revolutionary(M))
-					return 2
-			if("cult")
-				if(M.mind in SSticker.mode.cult)
-					return 2
-			if("nuclear")
-				if(M.mind.has_antag_datum(/datum/antagonist/nukeop,TRUE))
-					return 2
-			if("changeling")
-				if(M.mind.has_antag_datum(/datum/antagonist/changeling,TRUE))
-					return 2
-			if("wizard")
-				if(iswizard(M))
-					return 2
-			if("apprentice")
-				if(M.mind in SSticker.mode.apprentices)
-					return 2
-		return TRUE
-	if(M.mind && LAZYLEN(M.mind.antag_datums)) //they have an antag datum!
+	if(isAI(M))
+		var/mob/living/silicon/ai/A = M
+		return (A.laws?.zeroth && (A.mind?.special_role || !isnull(M.mind?.antag_datums)))
+	if(M.mind?.special_role || !isnull(M.mind?.antag_datums)) //they have an antag datum!
 		return TRUE
 	return FALSE
 
 
-/mob/proc/reagent_check(datum/reagent/R) // utilized in the species code
+/mob/proc/reagent_check(datum/reagent/R, delta_time, times_fired) // utilized in the species code
 	return TRUE
 
 
@@ -409,7 +337,7 @@
   * * notify_suiciders If it should notify suiciders (who do not qualify for many ghost roles)
   * * notify_volume How loud the sound should be to spook the user
   */
-/proc/notify_ghosts(var/message, var/ghost_sound = null, var/enter_link = null, var/atom/source = null, var/mutable_appearance/alert_overlay = null, var/action = NOTIFY_JUMP, flashwindow = TRUE, ignore_mapload = TRUE, ignore_key, header = null, notify_suiciders = TRUE, var/notify_volume = 100) //Easy notification of ghosts.
+/proc/notify_ghosts(message, ghost_sound = null, enter_link = null, atom/source = null, mutable_appearance/alert_overlay = null, action = NOTIFY_JUMP, flashwindow = TRUE, ignore_mapload = TRUE, ignore_key, header = null, notify_suiciders = TRUE, notify_volume = 100) //Easy notification of ghosts.
 	if(ignore_mapload && SSatoms.initialized != INITIALIZATION_INNEW_REGULAR)	//don't notify for objects created during a map load
 		return
 	for(var/mob/dead/observer/O in GLOB.player_list)
@@ -420,7 +348,7 @@
 				continue
 			var/orbit_link
 			if (source && action == NOTIFY_ORBIT)
-				orbit_link = " <a href='?src=[REF(O)];follow=[REF(source)]'>(Orbit)</a>"
+				orbit_link = " <a href='byond://?src=[REF(O)];follow=[REF(source)]'>(Orbit)</a>"
 			to_chat(O, span_ghostalert("[message][(enter_link) ? " [enter_link]" : ""][orbit_link]"))
 			if(ghost_sound)
 				SEND_SOUND(O, sound(ghost_sound, volume = notify_volume))
@@ -472,7 +400,7 @@
 			return FALSE
 
 ///Is the passed in mob an admin ghost
-/proc/IsAdminGhost(var/mob/user)
+/proc/IsAdminGhost(mob/user)
 	if(!user)		//Are they a mob? Auto interface updates call this with a null src
 		return
 	if(!user.client) // Do they have a client?
@@ -506,14 +434,20 @@
 		if(A)
 			poll_message = "[poll_message] Status:[A.name]."
 			ban_key = A.banning_key
-	var/list/mob/dead/observer/candidates = poll_candidates_for_mob(poll_message, ban_key, null, 10 SECONDS, M, ignore_category = FALSE)
+	var/mob/dead/observer/candidate = SSpolling.poll_ghosts_one_choice(
+		question = poll_message,
+		check_jobban = ban_key,
+		poll_time = 10 SECONDS,
+		jump_target = M,
+		alert_pic = M,
+	)
 
-	if(LAZYLEN(candidates))
-		var/mob/dead/observer/C = pick(candidates)
-		to_chat(M, "Your mob has been taken over by a ghost!")
-		message_admins("[key_name_admin(C)] has taken control of ([ADMIN_LOOKUPFLW(M)])")
+	if(candidate)
 		M.ghostize(FALSE)
-		M.key = C.key
+		M.key = candidate.key
+
+		to_chat(M, "Your mob has been taken over by a ghost!")
+		message_admins("[key_name_admin(candidate)] has taken control of ([ADMIN_LOOKUPFLW(M)])")
 		return TRUE
 	else
 		to_chat(M, "There were no ghosts willing to take control.")
@@ -541,7 +475,7 @@
 	// Cannot use the list as a map if the key is a number, so we stringify it (thank you BYOND)
 	var/smessage_type = num2text(message_type)
 
-	if(client)
+	if(client?.player_details)
 		if(!islist(client.player_details.logging[smessage_type]))
 			client.player_details.logging[smessage_type] = list()
 
@@ -570,7 +504,7 @@
 
 	logging[smessage_type] += timestamped_message
 
-	if(client)
+	if(client?.player_details)
 		client.player_details.logging[smessage_type] += timestamped_message
 
 	..()
@@ -598,6 +532,8 @@
 		return TRUE
 	else if(has_unlimited_silicon_privilege)
 		return TRUE
+	else if(HAS_TRAIT(src, TRAIT_REAGENT_SCANNER))
+		return TRUE
 	else if(HAS_TRAIT(src, TRAIT_BARMASTER)) // If they're a bar master, they know what reagents are at a glance
 		return TRUE
 
@@ -607,8 +543,14 @@
 		return TRUE
 	else if(has_unlimited_silicon_privilege)
 		return TRUE
+	else if(HAS_TRAIT(src, TRAIT_BOOZE_SLIDER))
+		return TRUE
 	else if(HAS_TRAIT(src, TRAIT_BARMASTER))
 		return TRUE
+
+///Can this mob hold items
+/mob/proc/can_hold_items(obj/item/I)
+	return length(held_items)
 
 /**
  * Zone selection helpers.
@@ -722,3 +664,42 @@
  */
 /mob/proc/_set_zone_selected(zone_selected)
 	src.zone_selected = zone_selected
+
+/// Returns a generic path of the object based on the slot
+/proc/get_path_by_slot(slot_id)
+	switch(slot_id)
+		if(ITEM_SLOT_BACK)
+			return /obj/item/storage/backpack
+		if(ITEM_SLOT_MASK)
+			return /obj/item/clothing/mask
+		if(ITEM_SLOT_NECK)
+			return /obj/item/clothing/neck
+		if(ITEM_SLOT_HANDCUFFED)
+			return /obj/item/restraints/handcuffs
+		if(ITEM_SLOT_LEGCUFFED)
+			return /obj/item/restraints/legcuffs
+		if(ITEM_SLOT_BELT)
+			return /obj/item/storage/belt
+		if(ITEM_SLOT_ID)
+			return /obj/item/card/id
+		if(ITEM_SLOT_EARS)
+			return /obj/item/clothing/ears
+		if(ITEM_SLOT_EYES)
+			return /obj/item/clothing/glasses
+		if(ITEM_SLOT_GLOVES)
+			return /obj/item/clothing/gloves
+		if(ITEM_SLOT_HEAD)
+			return /obj/item/clothing/head
+		if(ITEM_SLOT_FEET)
+			return /obj/item/clothing/shoes
+		if(ITEM_SLOT_OCLOTHING)
+			return /obj/item/clothing/suit
+		if(ITEM_SLOT_ICLOTHING)
+			return /obj/item/clothing/under
+		if(ITEM_SLOT_LPOCKET)
+			return /obj/item
+		if(ITEM_SLOT_RPOCKET)
+			return /obj/item
+		if(ITEM_SLOT_SUITSTORE)
+			return /obj/item
+	return null

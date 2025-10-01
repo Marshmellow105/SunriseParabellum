@@ -55,7 +55,7 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/light_construct)
 	else
 		. += span_danger("This casing doesn't support power cells for backup power.")
 
-/obj/structure/light_construct/attack_hand(mob/user)
+/obj/structure/light_construct/attack_hand(mob/user, list/modifiers)
 	if(cell)
 		user.visible_message("[user] removes [cell] from [src]!",span_notice("You remove [cell]."))
 		user.put_in_hands(cell)
@@ -163,15 +163,15 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/light_construct)
 
 /obj/structure/light_construct/proc/store_cell(new_cell)
 	if(cell)
-		UnregisterSignal(cell, COMSIG_PARENT_QDELETING)
+		UnregisterSignal(cell, COMSIG_QDELETING)
 	cell = new_cell
 	if(cell)
-		RegisterSignal(cell, COMSIG_PARENT_QDELETING, PROC_REF(remove_cell))
+		RegisterSignal(cell, COMSIG_QDELETING, PROC_REF(remove_cell))
 
 /obj/structure/light_construct/proc/remove_cell()
 	SIGNAL_HANDLER
 	if(cell)
-		UnregisterSignal(cell, COMSIG_PARENT_QDELETING)
+		UnregisterSignal(cell, COMSIG_QDELETING)
 		cell = null
 
 /obj/structure/light_construct/small

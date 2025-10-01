@@ -183,7 +183,7 @@
 		process_hack(delta_time)
 	return ..()
 
-/mob/living/silicon/pai/proc/process_hack(delta_time)
+/mob/living/silicon/pai/proc/process_hack(delta_time, times_fired)
 	if(hacking_cable?.machine && istype(hacking_cable.machine, /obj/machinery/door) && hacking_cable.machine == hackdoor && get_dist(src, hackdoor) <= 1)
 		hackprogress = clamp(hackprogress + (2 * delta_time), 0, 100)
 		hackbar.update(hackprogress)
@@ -236,11 +236,8 @@
 
 // See software.dm for Topic()
 
-/mob/living/silicon/pai/canUseTopic(atom/movable/M, be_close=FALSE, no_dexterity=FALSE, no_tk=FALSE)
-	if(be_close && !in_range(M, src))
-		to_chat(src, span_warning("You are too far away!"))
-		return FALSE
-	return TRUE
+/mob/living/silicon/pai/canUseTopic(atom/movable/M, be_close=FALSE, no_dexterity=FALSE, no_tk=FALSE, need_hands = FALSE, floor_okay=FALSE)
+	return ..(M, be_close, no_dexterity, no_tk, need_hands, TRUE) //Resting is just an aesthetic feature for them.
 
 /mob/proc/makePAI(delold)
 	var/obj/item/paicard/card = new /obj/item/paicard(get_turf(src))
@@ -318,8 +315,9 @@
 	. = ..()
 	. += "A personal AI in holochassis mode. Its master ID string seems to be [master]."
 
-/mob/living/silicon/pai/Life()
-	if(stat == DEAD)
+/mob/living/silicon/pai/Life(delta_time = SSMOBS_DT, times_fired)
+	. = ..()
+	if(QDELETED(src) || stat == DEAD)
 		return
 	if(hacking_cable)
 		if(get_dist(src, hacking_cable) > 1)
@@ -329,16 +327,15 @@
 			if(!QDELETED(card))
 				card.update_icon()
 		else if(hacking)
-			process_hack()
-	silent = max(silent - 1, 0)
-	. = ..()
+			process_hack(delta_time, times_fired)
+	silent = max(silent - (0.5 * delta_time), 0)
 
 /mob/living/silicon/pai/updatehealth()
-	if(status_flags & GODMODE)
+	if(HAS_TRAIT(src, TRAIT_GODMODE))
 		return
 	set_health(maxHealth - getBruteLoss() - getFireLoss())
 	update_stat()
-	SEND_SIGNAL(src, COMSIG_LIVING_UPDATE_HEALTH)
+	SEND_SIGNAL(src, COMSIG_LIVING_HEALTH_UPDATE)
 
 /mob/living/silicon/pai/process(delta_time)
 	emitterhealth = clamp((emitterhealth + (emitterregen * delta_time)), -50, emittermaxhealth)

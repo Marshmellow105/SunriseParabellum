@@ -92,8 +92,6 @@ To add a crossbreed:
 			itemcolor = "#008B8B"
 	add_atom_colour(itemcolor, FIXED_COLOUR_PRIORITY)
 
-/obj/item/slimecross/ComponentInitialize()
-	. = ..()
 	if(discovery_points)
 		AddComponent(/datum/component/discoverable, discovery_points)
 
@@ -158,7 +156,7 @@ To add a crossbreed:
 	if(self_use_only && M != user)
 		to_chat(user, span_warning("This can only be used on yourself."))
 		return
-	if(reagents.total_volume && (ignore_flags || M.can_inject(user, 1)))
+	if(reagents.total_volume && (ignore_flags || M.try_inject(user, injection_flags = INJECT_TRY_SHOW_ERROR_MESSAGE)))
 		reagents.trans_to(M, reagents.total_volume, transfered_by = user)
 		if(user != M)
 			to_chat(M, span_warning("[user] presses [src] against you!"))

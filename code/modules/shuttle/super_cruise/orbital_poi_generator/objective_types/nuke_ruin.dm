@@ -39,7 +39,8 @@
 	desc = "An old, worn nuclear authentication disk used in the outdated X-7 nuclear fission explosive. Nanotrasen no longer uses this model of authentication due to its poor security."
 	fake = TRUE
 
-/obj/item/disk/nuclear/decommission/ComponentInitialize()
+/obj/item/disk/nuclear/decommission/Initialize(mapload)
+	. = ..()
 	AddComponent(/datum/component/gps, "AUTH0", TRUE)
 	AddComponent(/datum/component/tracking_beacon, EXPLORATION_TRACKING, null, null, TRUE, "#f3d594", TRUE, TRUE)
 
@@ -55,11 +56,6 @@ GLOBAL_LIST_EMPTY(decomission_bombs)
 	var/datum/orbital_objective/nuclear_bomb/linked_objective
 	var/target_z
 
-/obj/machinery/nuclearbomb/decomission/ComponentInitialize()
-	. = ..()
-	AddComponent(/datum/component/gps, "BOMB0", TRUE)
-	AddComponent(/datum/component/tracking_beacon, EXPLORATION_TRACKING, null, null, TRUE, "#df3737", TRUE, TRUE)
-
 /obj/machinery/nuclearbomb/decomission/Initialize(mapload)
 	. = ..()
 	GLOB.decomission_bombs += src
@@ -69,6 +65,8 @@ GLOBAL_LIST_EMPTY(decomission_bombs)
 	pod.explosionSize = list(0,0,0,4)
 	new /obj/effect/pod_landingzone(get_turf(src), pod)
 	forceMove(pod)
+	AddComponent(/datum/component/gps, "BOMB0", TRUE)
+	AddComponent(/datum/component/tracking_beacon, EXPLORATION_TRACKING, null, null, TRUE, "#df3737", TRUE, TRUE)
 
 /obj/machinery/nuclearbomb/decomission/Destroy()
 	. = ..()
@@ -104,9 +102,7 @@ GLOBAL_LIST_EMPTY(decomission_bombs)
 	if(timing)
 		detonation_timer = world.time + (timer_set * 10)
 		countdown.start()
-		priority_announce("Nuclear fission explosive armed at abandoned outpost, vacate \
-			outpost immediately.",
-			null, 'sound/misc/notice1.ogg', ANNOUNCEMENT_TYPE_PRIORITY)
+		exploration_announce("Nuclear fission explosive armed. Vacate the outpost immediately.", z)
 	else
 		detonation_timer = null
 		countdown.stop()

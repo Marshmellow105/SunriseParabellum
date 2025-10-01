@@ -24,7 +24,7 @@
 	..()
 
 //ATTACK HAND IGNORING PARENT RETURN VALUE
-/obj/item/wallframe/picture/attack_hand(mob/user)
+/obj/item/wallframe/picture/attack_hand(mob/user, list/modifiers)
 	if(user.get_inactive_held_item() != src)
 		..()
 		return
@@ -95,7 +95,7 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/sign/picture_frame)
 
 //Manual loading, DO NOT USE FOR HARDCODED/MAPPED IN ALBUMS. This is for if an album needs to be loaded mid-round from an ID.
 /obj/structure/sign/picture_frame/proc/persistence_load()
-	var/list/data = SSpersistence.GetPhotoFrames()
+	var/list/data = SSpersistence.get_photo_frames()
 	if(data[persistence_id])
 		load_from_id(data[persistence_id])
 
@@ -142,7 +142,7 @@ CREATION_TEST_IGNORE_SUBTYPES(/obj/structure/sign/picture_frame)
 
 	..()
 
-/obj/structure/sign/picture_frame/attack_hand(mob/user)
+/obj/structure/sign/picture_frame/attack_hand(mob/user, list/modifiers)
 	. = ..()
 	if(.)
 		return

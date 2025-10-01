@@ -21,7 +21,7 @@
 		for(var/buck in buckled_mobs) //breaking a nest releases all the buckled mobs, because the nest isn't holding them down anymore
 			var/mob/living/M = buck
 
-			if(user.getorgan(/obj/item/organ/alien/plasmavessel))
+			if(user.get_organ_by_type(/obj/item/organ/alien/plasmavessel))
 				unbuckle_mob(M)
 				add_fingerprint(user)
 				return
@@ -54,9 +54,9 @@
 	if(!ismob(M) || (get_dist(src, user) > 1) || (M.loc != src.loc) || user.incapacitated() || M.buckled)
 		return
 
-	if(M.getorgan(/obj/item/organ/alien/plasmavessel))
+	if(M.get_organ_by_type(/obj/item/organ/alien/plasmavessel))
 		return
-	if(!user.getorgan(/obj/item/organ/alien/plasmavessel))
+	if(!user.get_organ_by_type(/obj/item/organ/alien/plasmavessel))
 		return
 
 	if(has_buckled_mobs())
@@ -88,7 +88,7 @@
 			playsound(loc, 'sound/items/welder.ogg', 100, 1)
 
 /obj/structure/bed/nest/attack_alien(mob/living/carbon/alien/user)
-	if(user.a_intent != INTENT_HARM)
+	if(!user.combat_mode)
 		return attack_hand(user)
 	else
 		return ..()

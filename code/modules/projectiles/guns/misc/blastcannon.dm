@@ -9,7 +9,6 @@
 	fire_sound = 'sound/weapons/blastcannon.ogg'
 	item_flags = NONE
 	clumsy_check = FALSE
-	randomspread = FALSE
 
 	var/hugbox = TRUE
 	var/max_power = INFINITY
@@ -88,7 +87,7 @@
 		return 0
 	return ((pressure - TANK_FRAGMENT_PRESSURE) / TANK_FRAGMENT_SCALE)
 
-/obj/item/gun/blastcannon/afterattack(atom/target, mob/user, flag, params)
+/obj/item/gun/blastcannon/pull_trigger(atom/target, mob/living/user, params, aimed)
 	if((!bomb && bombcheck) || (!target) || (get_dist(get_turf(target), get_turf(user)) <= 2))
 		return ..()
 	var/power = bomb? calculate_bomb() : debug_power
@@ -106,7 +105,8 @@
 	log_game("Blast wave fired from [AREACOORD(starting)] at [AREACOORD(targturf)] ([target.name]) by [key_name(user)] with power [heavy]/[medium]/[light].")
 	var/obj/projectile/blastwave/BW = new(loc, heavy, medium, light)
 	BW.hugbox = hugbox
-	BW.preparePixelProjectile(target, get_turf(src), params, 0)
+	var/modifiers = params2list(params)
+	BW.preparePixelProjectile(target, get_turf(src), modifiers, 0)
 	BW.fire()
 
 /obj/projectile/blastwave

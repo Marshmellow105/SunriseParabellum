@@ -78,10 +78,8 @@
 	blood_state = BLOOD_STATE_OIL
 	bloodiness = BLOOD_AMOUNT_PER_DECAL
 	clean_type = CLEAN_TYPE_BLOOD
-
-/obj/effect/decal/cleanable/oil/Initialize(mapload)
-	. = ..()
-	reagents.add_reagent(/datum/reagent/oil, 30)
+	decal_reagent = /datum/reagent/oil
+	reagent_amount = 30
 
 /obj/effect/decal/cleanable/oil/attackby(obj/item/I, mob/living/user)
 	var/attacked_by_hot_thing = I.is_hot()
@@ -104,6 +102,6 @@
 	icon_state = "streak1"
 	random_icon_states = list("streak1", "streak2", "streak3", "streak4", "streak5")
 
-/obj/effect/decal/cleanable/oil/slippery/ComponentInitialize()
+/obj/effect/decal/cleanable/oil/slippery/Initialize(mapload)
 	. = ..()
 	AddComponent(/datum/component/slippery, 80, (NO_SLIP_WHEN_WALKING | SLIDE))

@@ -17,11 +17,13 @@
 	desc = "A large structure used to remove the heads of traitors and treasonists."
 	icon = 'icons/obj/guillotine.dmi'
 	icon_state = "guillotine_raised"
+	icon_preview = 'icons/obj/previews.dmi'
+	icon_state_preview = "guillotine"
 	can_buckle = TRUE
 	anchored = TRUE
 	density = TRUE
 	max_buckled_mobs = 1
-	buckle_lying = FALSE
+	buckle_lying = 0
 	buckle_prevents_pull = TRUE
 	layer = ABOVE_MOB_LAYER
 	move_resist = MOVE_FORCE_STRONG
@@ -54,7 +56,7 @@
 	if (LAZYLEN(buckled_mobs))
 		. += "Someone appears to be strapped in. You can help them out, or you can harm them by activating the guillotine."
 
-/obj/structure/guillotine/attack_hand(mob/user)
+/obj/structure/guillotine/attack_hand(mob/living/user)
 	add_fingerprint(user)
 
 	// Currently being used by something
@@ -71,7 +73,7 @@
 			return
 		if (GUILLOTINE_BLADE_RAISED)
 			if (LAZYLEN(buckled_mobs))
-				if (user.a_intent == INTENT_HARM)
+				if (user.combat_mode)
 					user.visible_message(span_warning("[user] begins to pull the lever!"),
 						                 span_warning("You begin to the pull the lever."))
 					current_action = GUILLOTINE_ACTION_INUSE
@@ -175,7 +177,7 @@
 	else
 		return ..()
 
-/obj/structure/guillotine/buckle_mob(mob/living/M, mob/user, check_loc = TRUE)
+/obj/structure/guillotine/user_buckle_mob(mob/living/M, mob/user, check_loc = TRUE)
 	if (!anchored)
 		to_chat(usr, span_warning("The [src] needs to be wrenched to the floor!"))
 		return FALSE

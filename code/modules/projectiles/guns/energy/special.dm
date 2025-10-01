@@ -7,8 +7,10 @@
 	w_class = WEIGHT_CLASS_HUGE
 	flags_1 =  CONDUCT_1
 	slot_flags = ITEM_SLOT_BACK
-	ammo_type = list(/obj/item/ammo_casing/energy/ion)
+	ammo_type = list(/obj/item/ammo_casing/energy/ion) //Heavy EMP, 15 shots
 	ammo_x_offset = 3
+	fire_rate = 1.5
+	gun_charge = 12000 WATT
 
 /obj/item/gun/energy/ionrifle/add_seclight_point()
 	AddComponent(/datum/component/seclite_attachable, \
@@ -19,13 +21,16 @@
 
 /obj/item/gun/energy/ionrifle/carbine
 	name = "ion carbine"
-	desc = "The MK.II Prototype Ion Projector is a lightweight carbine version of the larger ion rifle, built to be ergonomic and efficient."
+	desc = "The MK.II Prototype Ion Projector is much faster, built to be ergonomic and efficient, but packs less of a punch per shot."
 	icon_state = "ioncarbine"
 	worn_icon_state = "ioncarbine"
-	w_class = WEIGHT_CLASS_LARGE
+	w_class = WEIGHT_CLASS_HUGE
 	slot_flags = ITEM_SLOT_BELT
 	pin = null
+	ammo_type = list(/obj/item/ammo_casing/energy/ion/weak) //Light EMP, 24 shots
 	ammo_x_offset = 2
+	fire_rate = 2.5
+	full_auto = TRUE
 
 /obj/item/gun/energy/ionrifle/carbine/add_seclight_point()
 	. = ..()
@@ -73,7 +78,6 @@
 	item_state = "c20r"
 	w_class = WEIGHT_CLASS_BULKY
 	ammo_type = list(/obj/item/ammo_casing/energy/meteor)
-	cell_type = "/obj/item/stock_parts/cell/potato"
 	clumsy_check = 0 //Admin spawn only, might as well let clowns use it.
 	selfcharge = 1
 	automatic_charge_overlays = FALSE
@@ -141,7 +145,7 @@
 			to_chat(user, span_notice("You try to insert [I] into [src], but it's fully charged.")) //my cell is round and full
 			return
 		I.use(1)
-		cell.give(50*charge_multiplier)
+		cell.give(5 KILOWATT *charge_multiplier)
 		to_chat(user, span_notice("You insert [I] in [src], recharging it."))
 	else
 		..()
@@ -241,7 +245,7 @@
 			if(istype(WH))
 				WH.gun = WEAKREF(src)
 
-/obj/item/gun/energy/wormhole_projector/process_chamber()
+/obj/item/gun/energy/wormhole_projector/on_chamber_fired()
 	..()
 	select_fire()
 
@@ -291,7 +295,7 @@
 	desc = "An LMG that fires 3D-printed flechettes. They are slowly resupplied using the cyborg's internal power source."
 	icon_state = "l6_cyborg"
 	icon = 'icons/obj/guns/projectile.dmi'
-	cell_type = "/obj/item/stock_parts/cell/secborg"
+	gun_charge = 6 KILOWATT
 	ammo_type = list(/obj/item/ammo_casing/energy/c3dbullet)
 	can_charge = FALSE
 	use_cyborg_cell = TRUE
@@ -310,7 +314,7 @@
 	icon_state = "freezegun"
 	desc = "A gun that changes temperatures."
 	ammo_type = list(/obj/item/ammo_casing/energy/temp, /obj/item/ammo_casing/energy/temp/hot)
-	cell_type = "/obj/item/stock_parts/cell/high"
+	gun_charge = 100 KILOWATT
 	automatic = 1
 	fire_rate = 4
 	pin = null

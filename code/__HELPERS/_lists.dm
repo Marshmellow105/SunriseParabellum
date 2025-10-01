@@ -25,6 +25,10 @@
 #define LAZYINITLIST(L) if (!L) { L = list(); }
 ///If the provided list is empty, set it to null
 #define UNSETEMPTY(L) if (L && !length(L)) L = null
+///If the provided key -> list is empty, remove it from the list
+#define ASSOC_UNSETEMPTY(L, K) if (!length(L[K])) L -= K;
+///Like LAZYCOPY - copies an input list if the list has entries, If it doesn't the assigned list is nulled
+#define LAZYLISTDUPLICATE(L) (L ? L.Copy() : null )
 ///copies an input list if the list has entries
 #define LAZYCOPY(L) (L ? L.Copy() : list() )
 ///Remove an item from the list, set the list to null if empty
@@ -39,6 +43,8 @@
 #define LAZYACCESS(L, I) (L ? (isnum_safe(I) ? (I > 0 && I <= length(L) ? L[I] : null) : L[I]) : null)
 ///Sets the item K to the value V, if the list is null it will initialize it
 #define LAZYSET(L, K, V) if(!L) { L = list(); } L[K] = V;
+///Sets the length of a lazylist
+#define LAZYSETLEN(L, V) if (!L) { L = list(); } L.len = V;
 ///Returns the lenght of the list
 #define LAZYLEN(L) length(L) // should only be used for lazy lists. Using this with non-lazy lists is bad
 ///Sets a list to null
@@ -334,30 +340,16 @@
 	var/total = 0
 	var/item
 	for(item in list_to_pick)
-		if(!list_to_pick[item])
-			list_to_pick[item] = 1
 		total += list_to_pick[item]
+
+	// If everything has no weight set, then perform a standard pick
+	if (!total)
+		return pick(list_to_pick)
 
 	total *= rand()
 	for(item in list_to_pick)
 		total -= list_to_pick[item]
 		if(total <= 0)
-			return item
-
-	return null
-///The original pick_weight proc will sometimes pick entries with zero weight. I'm not sure if changing the original will break anything, so I left it be.
-/proc/pick_weight_allow_zero(list/list_to_pick)
-	var/total = 0
-	var/item
-	for(item in list_to_pick)
-		if(!list_to_pick[item])
-			list_to_pick[item] = 0
-		total += list_to_pick[item]
-
-	total *= rand()
-	for(item in list_to_pick)
-		total -= list_to_pick[item]
-		if(total <= 0 && list_to_pick[item])
 			return item
 
 	return null
@@ -486,7 +478,7 @@
 /proc/sort_record(list/record_list, order = 1)
 	return sortTim(record_list, order >= 0 ? GLOBAL_PROC_REF(cmp_records_asc) : GLOBAL_PROC_REF(cmp_records_dsc))
 
-/// sorting any value in a list with any comparator
+/// sorting any value in a list with any comparator. Ascending Alphabetize if no second arg is passed
 /proc/sort_list(list/list_to_sort, cmp=GLOBAL_PROC_REF(cmp_text_asc))
 	return sortTim(list_to_sort.Copy(), cmp)
 
@@ -495,13 +487,13 @@
 	return sortTim(list_to_sort, order >= 0 ? GLOBAL_PROC_REF(cmp_name_asc) : GLOBAL_PROC_REF(cmp_name_dsc))
 
 //Mergesort: any value in a list, preserves key=value structure
-/proc/sortAssoc(var/list/L)
+/proc/sortAssoc(list/L)
 	if(L.len < 2)
 		return L
 	var/middle = L.len / 2 + 1 // Copy is first,second-1
 	return mergeAssoc(sortAssoc(L.Copy(0,middle)), sortAssoc(L.Copy(middle))) //second parameter null = to end of list
 
-/proc/mergeAssoc(var/list/L, var/list/R)
+/proc/mergeAssoc(list/L, list/R)
 	var/Li=1
 	var/Ri=1
 	var/list/result = new()

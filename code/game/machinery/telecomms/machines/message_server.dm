@@ -130,8 +130,8 @@
 
 	// log the signal
 	if(istype(signal, /datum/signal/subspace/messaging/tablet_msg))
-		var/datum/signal/subspace/messaging/tablet_msg/PDAsignal = signal
-		var/datum/data_tablet_msg/msg = new(PDAsignal.format_target(), "[PDAsignal.data["name"]] ([PDAsignal.data["job"]])", PDAsignal.data["message"], PDAsignal.data["photo"], PDAsignal.data["emojis"])
+		var/datum/signal/subspace/messaging/tablet_msg/PDanomaly_core = signal
+		var/datum/data_tablet_msg/msg = new(PDanomaly_core.format_target(), "[PDanomaly_core.data["name"]] ([PDanomaly_core.data["job"]])", PDanomaly_core.data["message"], PDanomaly_core.data["photo"], PDanomaly_core.data["emojis"])
 		modular_msgs += msg
 		signal.logged = msg
 	else if(istype(signal, /datum/signal/subspace/messaging/rc))
@@ -228,9 +228,9 @@
 	if(href_list["photo"])
 		var/mob/M = usr
 		M << browse_rsc(picture.picture_image, "pda_photo.png")
-		M << browse("<html><head><meta http-equiv='Content-Type' content='text/html; charset=UTF-8'><title>PDA Photo</title></head>" \
+		M << browse("<!DOCTYPE html><html><head><meta http-equiv='Content-Type' content='text/html; charset=UTF-8'><title>PDA Photo</title></head>" \
 		+ "<body style='overflow:hidden;margin:0;text-align:center'>" \
-		+ "<img src='pda_photo.png' width='480' style='-ms-interpolation-mode:nearest-neighbor' />" \
+		+ "<img src='pda_photo.png' width='480' style='-ms-interpolation-mode:nearest-neighbor;image-rendering:pixelated' />" \
 		+ "</body></html>", "window=photo_showing;size=480x608")
 		onclose(M, "pdaphoto")
 

@@ -9,7 +9,7 @@
 	var/activated = FALSE
 
 /obj/item/suspiciousphone/attack_self(mob/user)
-	if(!ishuman(user))
+	if(!ISADVANCEDTOOLUSER(user))
 		to_chat(user, span_warning("This device is too advanced for you!"))
 		return
 	if(activated)
@@ -39,7 +39,6 @@
 	pixel_z = -8
 	layer = LARGE_MOB_LAYER
 	max_integrity = 600
-	max_hit_damage = 30
 	/// when this gets at this hp, it will run away! oh no!
 	var/next_health_to_teleport
 	var/mob/living/carbon/human/bogdanoff

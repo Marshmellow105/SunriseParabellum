@@ -340,7 +340,7 @@
 	else
 		SSshuttle.emergencyLastCallLoc = null
 
-	priority_announce("The emergency shuttle has been called. [redAlert ? "Red Alert state confirmed: Dispatching priority shuttle. " : "" ]It will arrive in [timeLeft(600)] minutes.[reason][SSshuttle.emergencyLastCallLoc ? "\n\nCall signal traced. Results can be viewed on any communications console." : "" ][SSshuttle.adminEmergencyNoRecall ? "\n\nWarning: Shuttle recall subroutines disabled; Recall not possible." : ""]", null, ANNOUNCER_SHUTTLECALLED, ANNOUNCEMENT_TYPE_PRIORITY, null, TRUE)
+	priority_announce("The emergency shuttle has been called. [redAlert ? "High risk state confirmed: Dispatching priority shuttle. " : "" ]It will arrive in [timeLeft(600)] minutes.[reason][SSshuttle.emergencyLastCallLoc ? "\n\nCall signal traced. Results can be viewed on any communications console." : "" ][SSshuttle.adminEmergencyNoRecall ? "\n\nWarning: Shuttle recall subroutines disabled; Recall not possible." : ""]", null, ANNOUNCER_SHUTTLECALLED, ANNOUNCEMENT_TYPE_PRIORITY, null, TRUE)
 
 	if(SSshuttle.checkInfestedEnvironment()) //If an Alien Queen exists, set a delayed alert
 		infestation_alert_timer = addtimer(CALLBACK(src, PROC_REF(infested_shuttle)), rand(150 SECONDS, call_time), TIMER_STOPPABLE) //Delay timer is random from 2:30 to the full duration of the shuttle call
@@ -384,7 +384,7 @@
 			if(player.stat != DEAD)
 				if(issilicon(player)) //Borgs are technically dead anyways
 					continue
-				if(isanimal(player)) //animals don't count
+				if(isanimal_or_basicmob(player)) //animals don't count
 					continue
 				if(isbrain(player)) //also technically dead
 					continue
@@ -475,7 +475,6 @@
 
 		if(SHUTTLE_IGNITING)
 			var/success = TRUE
-			//Check if the gamemode is clockcult and the clockies are utter failures
 			if(GLOB.celestial_gateway && !GLOB.gateway_opening)
 				SSshuttle.registerHostileEnvironment(GLOB.celestial_gateway)
 				var/obj/structure/destructible/clockwork/massive/celestial_gateway/gateway = GLOB.celestial_gateway
@@ -514,7 +513,12 @@
 				mode = SHUTTLE_ESCAPE
 				launch_status = ENDGAME_LAUNCHED
 				setTimer(SSshuttle.emergencyEscapeTime * engine_coeff)
-				priority_announce("The Emergency Shuttle has left the station. Estimate: [timeLeft(600)] minutes until the shuttle docks at Central Command.", null, null, ANNOUNCEMENT_TYPE_PRIORITY)
+				priority_announce(
+					text = "The emergency shuttle has left the station. Estimate [timeLeft(60 SECONDS)] minutes until the shuttle docks at [command_name()].",
+					title = "Emergency Shuttle Departure",
+					sender_override = "Emergency Shuttle Uplink Alert",
+					color_override = "orange",
+				)
 
 		if(SHUTTLE_STRANDED)
 			SSshuttle.checkHostileEnvironment()
@@ -677,7 +681,7 @@
 	name = "emergency space helmet"
 	icon_state = "syndicate-helm-orange"
 	item_state = "syndicate-helm-orange"
-	flash_protect = 0
+	flash_protect = FLASH_PROTECTION_NONE
 
 /obj/item/clothing/suit/space/orange
 	name = "emergency space suit"
@@ -716,9 +720,9 @@
 	if (can_interact(user))
 		return ..()
 
-/obj/item/storage/pod/attack_hand(mob/user)
+/obj/item/storage/pod/attack_hand(mob/user, list/modifiers)
 	if (can_interact(user))
-		SEND_SIGNAL(src, COMSIG_TRY_STORAGE_SHOW, user)
+		atom_storage?.show_contents(user)
 	return TRUE
 
 /obj/item/storage/pod/MouseDrop(over_object, src_location, over_location)

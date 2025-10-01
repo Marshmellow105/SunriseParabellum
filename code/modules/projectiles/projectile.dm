@@ -68,7 +68,11 @@
 	/// number of times we've pierced something. Incremented BEFORE bullet_act and on_hit proc!
 	var/pierces = 0
 
+	/// If objects are below this layer, we pass through them
+	var/hit_threshhold = PROJECTILE_HIT_THRESHOLD_LAYER
+
 	var/speed = 0.8			//Amount of deciseconds it takes for projectile to travel
+	/// Angle of the projectile, 0 is up, 90 is right, 180 is down, 270 is left
 	var/Angle = 0
 	var/original_angle = 0		//Angle at firing
 	var/nondirectional_sprite = FALSE //Set TRUE to prevent projectiles from having their sprites rotated based on firing angle
@@ -156,6 +160,8 @@
 	var/shrapnel_type
 	///If TRUE, hit mobs even if they're on the floor and not our target
 	var/hit_stunned_targets = FALSE
+	/// If we are zone accurate, we always hit the zone we were targeting
+	var/zone_accurate = FALSE
 
 /obj/projectile/Initialize(mapload)
 	. = ..()
@@ -361,7 +367,10 @@
 			return TRUE
 
 	var/distance = get_dist(T, starting) // Get the distance between the turf shot from and the mob we hit and use that for the calculations.
-	def_zone = ran_zone(def_zone, max(100-(7*distance), 5)) //Lower accurancy/longer range tradeoff. 7 is a balanced number to use.
+	if (!zone_accurate)
+		def_zone = ran_zone(def_zone, max(100-(7*distance), 5)) //Lower accurancy/longer range tradeoff. 7 is a balanced number to use.
+	else if (!def_zone)
+		def_zone = ran_zone()
 
 	return process_hit(T, select_target(T, A, A), A)		// SELECT TARGET FIRST!
 
@@ -492,7 +501,7 @@
 	if(!isliving(target))
 		if(isturf(target))		// non dense turfs
 			return FALSE
-		if(target.layer < PROJECTILE_HIT_THRESHOLD_LAYER)
+		if(target.layer < hit_threshhold)
 			return FALSE
 		else if(!direct_target)		// non dense objects do not get hit unless specifically clicked
 			return FALSE
@@ -847,7 +856,10 @@
 		homing_offset_y = -homing_offset_y
 
 //Spread is FORCED!
-/obj/projectile/proc/preparePixelProjectile(atom/target, atom/source, params, spread = 0)
+/obj/projectile/proc/preparePixelProjectile(atom/target, atom/source, modifiers, spread = 0)
+	if(!isnull(modifiers) && !islist(modifiers))
+		stack_trace("WARNING: Projectile [type] fired with non-list modifiers, likely was passed click params.")
+
 	var/turf/current_location = get_turf(source)
 	var/turf/targloc = get_turf(target)
 	trajectory_ignore_forcemove = TRUE
@@ -855,13 +867,13 @@
 	trajectory_ignore_forcemove = FALSE
 	starting = get_turf(source)
 	original = target
-	if(targloc || !params)
+	if(targloc || !length(modifiers))
 		yo = targloc.y - current_location.y
 		xo = targloc.x - current_location.x
 		set_angle(get_angle(src, targloc) + spread)
 
-	if(isliving(source) && params)
-		var/list/calculated = calculate_projectile_angle_and_pixel_offsets(source, params)
+	if(isliving(source) && length(modifiers))
+		var/list/calculated = calculate_projectile_angle_and_pixel_offsets(source, modifiers)
 		p_x = calculated[2]
 		p_y = calculated[3]
 
@@ -874,8 +886,7 @@
 		stack_trace("WARNING: Projectile [type] fired without either mouse parameters, or a target atom to aim at!")
 		qdel(src)
 
-/proc/calculate_projectile_angle_and_pixel_offsets(mob/user, params)
-	var/list/modifiers = params2list(params)
+/proc/calculate_projectile_angle_and_pixel_offsets(mob/user, modifiers)
 	var/p_x = 0
 	var/p_y = 0
 	var/angle = 0

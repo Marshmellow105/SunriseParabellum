@@ -30,7 +30,7 @@
 	show_in_antagpanel = TRUE
 	antagpanel_category = "Other"
 	show_name_in_check_antagonists = TRUE
-	count_against_dynamic_roll_chance = FALSE
+	required_living_playtime = 0
 
 /datum/antagonist/hypnotized/on_gain()
 	owner.current.log_message("has been hypnotized!", LOG_ATTACK, color="red")

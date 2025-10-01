@@ -38,7 +38,7 @@
 	on = TRUE
 	icon_state = "igniter1"
 
-/obj/machinery/igniter/attack_hand(mob/user)
+/obj/machinery/igniter/attack_hand(mob/user, list/modifiers)
 	. = ..()
 	if(. || panel_open)
 		return
@@ -72,6 +72,11 @@
 /obj/machinery/igniter/update_icon_state()
 	icon_state = "[base_icon_state][(machine_stat & NOPOWER) ? 0 : on]"
 	return ..()
+
+/obj/machinery/igniter/add_context_self(datum/screentip_context/context, mob/user)
+	context.add_generic_deconstruction_actions(src)
+	if (!panel_open)
+		context.add_attack_hand_action("Turn [on ? "Off" : "On"]")
 
 // Wall mounted remote-control igniter.
 

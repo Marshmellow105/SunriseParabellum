@@ -92,22 +92,27 @@ SUBSYSTEM_DEF(traumas)
 			/obj/item/rod_of_asclepius
 			)),
 
-		"spiders"   = typecacheof(list(
+		"spiders" = typecacheof(list(
 			/obj/structure/spider
 			)),
 
-		"security"  = typecacheof(list(
+		"security" = typecacheof(list(
 			/obj/item/clothing/under/rank/security/officer,
 			/obj/item/clothing/under/rank/security/warden,
-			/obj/item/clothing/under/rank/security/head_of_security, /obj/item/clothing/under/rank/security/detective,
-			/obj/item/melee/baton, /obj/item/gun/energy/taser, /obj/item/restraints/handcuffs,
+			/obj/item/clothing/under/rank/security/head_of_security,
+			/obj/item/clothing/under/rank/security/detective,
+			/obj/item/melee/baton,
+			/obj/item/gun/energy/taser,
+			/obj/item/restraints/handcuffs,
 			/obj/item/melee/tonfa,
-			/obj/machinery/door/airlock/security, /obj/effect/hallucination/simple/securitron)),
+			/obj/machinery/door/airlock/security,
+			/obj/effect/client_image_holder/securitron,
+		)),
 
 		"clowns"    = typecacheof(list(
 			/obj/item/clothing/under/rank/civilian/clown, /obj/item/clothing/shoes/clown_shoes,
 			/obj/item/clothing/mask/gas/clown_hat, /obj/item/instrument/bikehorn,
-			/obj/item/modular_computer/tablet/pda/clown, /obj/item/grown/bananapeel)),
+			/obj/item/modular_computer/tablet/pda/preset/clown, /obj/item/grown/bananapeel)),
 
 		"greytide"  = typecacheof(list(
 			/obj/item/clothing/under/color/grey, /obj/item/melee/baton/cattleprod,
@@ -118,9 +123,13 @@ SUBSYSTEM_DEF(traumas)
 			/obj/item/organ/tail/lizard, /obj/item/reagent_containers/cup/glass/bottle/lizardwine)),
 
 		"skeletons" = typecacheof(list(
-			/obj/item/organ/tongue/bone, /obj/item/clothing/suit/armor/bone, /obj/item/stack/sheet/bone,
+			/obj/item/organ/tongue/bone,
+			/obj/item/clothing/suit/armor/bone,
+			/obj/item/dog_bone,
+			/obj/item/stack/sheet/bone,
 			/obj/item/food/meat/slab/human/mutant/skeleton,
-			/obj/effect/decal/remains/human)),
+			/obj/effect/decal/remains/human
+		)),
 
 		"conspiracies" = typecacheof(list(
 			/obj/item/clothing/under/rank/captain, /obj/item/clothing/under/rank/security/head_of_security,
@@ -129,7 +138,7 @@ SUBSYSTEM_DEF(traumas)
 			/obj/item/clothing/under/rank/security/head_of_security/white, /obj/item/clothing/under/rank/security/head_of_security/alt,
 			/obj/item/clothing/under/rank/rnd/research_director/alt, /obj/item/clothing/under/rank/rnd/research_director/turtleneck,
 			/obj/item/clothing/under/rank/captain/parade, /obj/item/clothing/under/rank/security/head_of_security/parade, /obj/item/clothing/under/rank/security/head_of_security/parade/female,
-			/obj/item/clothing/head/helmet/abductor, /obj/item/clothing/suit/armor/abductor/vest, /obj/item/abductor/baton,
+			/obj/item/clothing/head/helmet/abductor, /obj/item/clothing/suit/armor/abductor/vest, /obj/item/melee/baton/abductor,
 			/obj/item/storage/belt/military/abductor, /obj/item/gun/energy/alien, /obj/item/abductor/silencer,
 			/obj/item/abductor/gizmo, /obj/item/clothing/under/rank/centcom/official,
 			/obj/item/clothing/suit/space/hardsuit/ert, /obj/item/clothing/suit/space/hardsuit/ert/sec,
@@ -138,7 +147,7 @@ SUBSYSTEM_DEF(traumas)
 			/obj/machinery/door/airlock/centcom)),
 
 		"robots"   = typecacheof(list(
-			/obj/machinery/computer/upload, /obj/item/aiModule/, /obj/machinery/recharge_station,
+			/obj/machinery/computer/upload, /obj/item/ai_module/, /obj/machinery/recharge_station,
 			/obj/item/aicard, /obj/item/deactivated_swarmer, /obj/effect/mob_spawn/swarmer)),
 
 		"doctors"   = typecacheof(list(
@@ -169,7 +178,6 @@ SUBSYSTEM_DEF(traumas)
 			/obj/item/stack/sheet/brass,
 			/obj/machinery/door/airlock/clockwork,
 			/obj/item/clothing/suit/wizrobe, /obj/item/clothing/head/wizard, /obj/item/spellbook, /obj/item/staff,
-			/obj/item/clothing/suit/space/hardsuit/shielded/wizard, /obj/item/clothing/suit/space/hardsuit/wizard,
 			/obj/item/gun/magic/staff, /obj/item/gun/magic/wand,
 			/obj/item/nullrod, /obj/item/clothing/under/rank/civilian/chaplain)),
 
@@ -177,7 +185,7 @@ SUBSYSTEM_DEF(traumas)
 			/obj/item/clothing/mask/facehugger, /obj/item/organ/body_egg/alien_embryo,
 			/obj/structure/alien, /obj/item/toy/toy_xeno,
 			/obj/item/clothing/suit/armor/abductor, /obj/item/abductor, /obj/item/gun/energy/alien,
-			/obj/item/abductor/baton, /obj/item/radio/headset/abductor, /obj/item/scalpel/alien, /obj/item/hemostat/alien,
+			/obj/item/melee/baton/abductor, /obj/item/radio/headset/abductor, /obj/item/scalpel/alien, /obj/item/hemostat/alien,
 			/obj/item/retractor/alien, /obj/item/circular_saw/alien, /obj/item/surgicaldrill/alien, /obj/item/cautery/alien,
 			/obj/item/clothing/head/helmet/abductor, /obj/structure/bed/abductor, /obj/structure/table_frame/abductor,
 			/obj/structure/table/abductor, /obj/structure/table/optable/abductor, /obj/structure/closet/abductor, /obj/item/organ/heart/gland,
@@ -208,10 +216,8 @@ SUBSYSTEM_DEF(traumas)
 			/obj/item/reagent_containers/cup/glass/bottle/sake,
 			/obj/item/throwing_star,
 			/obj/item/clothing/head/costume/kitty/genuine,
-			/obj/item/clothing/suit/space/space_ninja,
-			/obj/item/clothing/mask/gas/space_ninja,
-			/obj/item/clothing/shoes/space_ninja,
-			/obj/item/clothing/gloves/space_ninja,
+			/obj/item/clothing/under/syndicate/ninja,
+			/obj/item/clothing/mask/gas/ninja,
 			/obj/item/vibro_weapon,
 			/obj/item/nullrod/scythe/vibro,
 			/obj/item/energy_katana,

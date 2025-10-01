@@ -101,7 +101,7 @@
 		mode = BOT_HUNT
 
 /mob/living/simple_animal/bot/honkbot/attack_hand(mob/living/carbon/human/H)
-	if(H.a_intent == "harm")
+	if(H.combat_mode)
 		retaliate(H)
 		addtimer(CALLBACK(src, PROC_REF(react_buzz)), 5)
 	return ..()
@@ -325,7 +325,7 @@
 	new /obj/effect/decal/cleanable/oil(loc)
 	..()
 
-/mob/living/simple_animal/bot/honkbot/attack_alien(var/mob/living/carbon/alien/user as mob)
+/mob/living/simple_animal/bot/honkbot/attack_alien(mob/living/carbon/alien/user as mob)
 	..()
 	if(!isalien(target))
 		target = user

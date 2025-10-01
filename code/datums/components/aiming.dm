@@ -249,7 +249,6 @@ AIMING_DROP_WEAPON means they selected the "drop your weapon" command
 					to_chat(user, span_warning("You fail to grab [target]!"))
 					return
 				var/mob/living/carbon/human/H = user
-				user.a_intent = INTENT_GRAB
 				H.dna.species.spec_attack_hand(user, target)
 				return
 			if(user.grab_state < GRAB_AGGRESSIVE)
@@ -259,7 +258,6 @@ AIMING_DROP_WEAPON means they selected the "drop your weapon" command
 					to_chat(user, span_warning("You fail to strengthen your grip on [target]!"))
 					return
 				var/mob/living/carbon/human/H = user
-				user.a_intent = INTENT_GRAB
 				H.dna.species.spec_attack_hand(user, target)
 				return
 			if(user.pulling != target)
@@ -297,9 +295,9 @@ AIMING_DROP_WEAPON means they selected the "drop your weapon" command
 	if(istype(parent, /obj/item/gun)) // If we have a gun, shoot it at the target
 		var/obj/item/gun/G = parent
 		if(holding_at_gunpoint)
-			G.afterattack(target, user, null, null, GUN_AIMED_POINTBLANK)
+			G.pull_trigger(target, user, null, GUN_AIMED_POINTBLANK)
 		else
-			G.afterattack(target, user, null, null, GUN_AIMED)
+			G.pull_trigger(target, user, null, GUN_AIMED)
 		stop_aiming()
 		return TRUE
 	if(isitem(parent)) // Otherwise, just wave it at them
@@ -351,7 +349,7 @@ AIMING_DROP_WEAPON means they selected the "drop your weapon" command
 	layer = ABOVE_MOB_LAYER
 
 // Initializes aiming component in bananas
-/obj/item/food/grown/banana/ComponentInitialize()
+/obj/item/food/grown/banana/Initialize(mapload)
 	. = ..()
 	AddComponent(/datum/component/aiming)
 

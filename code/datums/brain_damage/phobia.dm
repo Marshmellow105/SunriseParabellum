@@ -58,7 +58,7 @@
 		trigger_species -= owner.dna.species.type
 	..()
 
-/datum/brain_trauma/mild/phobia/on_life()
+/datum/brain_trauma/mild/phobia/on_life(delta_time, times_fired)
 	..()
 	if(HAS_TRAIT(owner, TRAIT_FEARLESS))
 		return
@@ -78,7 +78,7 @@
 
 			for(var/mob/living/carbon/human/HU in seen_atoms) //check equipment for trigger items
 				var/spook = 0
-				for(var/obj/I as() in HU.get_all_slots() | HU.held_items)
+				for(var/obj/I as() in HU.get_all_worn_items() | HU.held_items)
 					if(!QDELETED(I) && is_type_in_typecache(I, trigger_objs))
 						spook ++
 				if(spook)

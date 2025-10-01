@@ -6,6 +6,7 @@
 	show_in_antagpanel = TRUE
 	show_name_in_check_antagonists = TRUE
 	show_to_ghosts = TRUE
+	required_living_playtime = 4
 	// TODO: ui_name = "AntagInfoDragon"
 	var/list/datum/mind/carp = list()
 	/// The innate ability to summon rifts
@@ -20,7 +21,6 @@
 	var/objective_complete = FALSE
 	/// What areas are we allowed to place rifts in?
 	var/list/chosen_rift_areas = list()
-
 
 /datum/antagonist/space_dragon/greet()
 	to_chat(owner, "<b>Endless time and space we have moved through. We do not remember from where we came, we do not know where we will go. All space belongs to us.\n\
@@ -88,7 +88,7 @@
 	owner.current.faction |= FACTION_CARP
 	RegisterSignal(owner.current, COMSIG_LIVING_LIFE, PROC_REF(rift_checks))
 	RegisterSignal(owner.current, COMSIG_MOB_DEATH, PROC_REF(destroy_rifts))
-	RegisterSignal(owner.current, COMSIG_PARENT_QDELETING, PROC_REF(destroy_rifts))
+	RegisterSignal(owner.current, COMSIG_QDELETING, PROC_REF(destroy_rifts))
 	if(istype(owner.current, /mob/living/simple_animal/hostile/space_dragon))
 		var/mob/living/simple_animal/hostile/space_dragon/S = owner.current
 		S.can_summon_rifts = TRUE

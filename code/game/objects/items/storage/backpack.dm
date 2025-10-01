@@ -22,21 +22,17 @@
 	resistance_flags = NONE
 	max_integrity = 300
 
-/obj/item/storage/backpack/ComponentInitialize()
+/obj/item/storage/backpack/Initialize(mapload)
 	. = ..()
-	var/datum/component/storage/STR = GetComponent(/datum/component/storage)
-	STR.max_combined_w_class = 28
-	STR.max_w_class = WEIGHT_CLASS_LARGE
-	STR.max_items = 21
+	create_storage(max_slots = 25, max_specific_storage = WEIGHT_CLASS_LARGE, max_total_storage = 28)
 
 /*
  * Backpack Types
  */
 
-/obj/item/storage/backpack/old/ComponentInitialize()
+/obj/item/storage/backpack/old/Initialize(mapload)
 	. = ..()
-	var/datum/component/storage/STR = GetComponent(/datum/component/storage)
-	STR.max_combined_w_class = 12
+	atom_storage.max_total_storage = 12
 
 /obj/item/storage/backpack/holding
 	name = "bag of holding"
@@ -46,7 +42,6 @@
 	resistance_flags = FIRE_PROOF
 	item_flags = NO_MAT_REDEMPTION
 	armor_type = /datum/armor/backpack_holding
-	component_type = /datum/component/storage/concrete/bluespace/bag_of_holding
 
 
 /datum/armor/backpack_holding
@@ -59,12 +54,10 @@
 	icon_state = "clownpack"
 	item_state = "clownpack"
 
-/obj/item/storage/backpack/holding/ComponentInitialize()
+/obj/item/storage/backpack/holding/Initialize(mapload)
 	. = ..()
-	var/datum/component/storage/STR = GetComponent(/datum/component/storage)
-	STR.allow_big_nesting = TRUE
-	STR.max_w_class = WEIGHT_CLASS_GIGANTIC
-	STR.max_combined_w_class = 70
+	create_storage(max_specific_storage = WEIGHT_CLASS_GIGANTIC, max_total_storage = 70, max_slots = 30, storage_type = /datum/storage/bag_of_holding)
+	atom_storage.allow_big_nesting = TRUE
 
 /obj/item/storage/backpack/holding/suicide_act(mob/living/user)
 	user.visible_message(span_suicide("[user] is jumping into [src]! It looks like [user.p_theyre()] trying to commit suicide."))
@@ -87,8 +80,6 @@
 	resistance_flags = FIRE_PROOF
 	item_flags = NO_MAT_REDEMPTION
 	armor_type = /datum/armor/backpack_hammerspace
-	component_type = /datum/component/storage/concrete/bluespace/bag_of_holding
-
 
 /datum/armor/backpack_hammerspace
 	melee = 100
@@ -101,17 +92,13 @@
 	fire = 100
 	acid = 100
 
-/obj/item/storage/backpack/hammerspace/ComponentInitialize()
+/obj/item/storage/backpack/hammerspace/Initialize(mapload)
 	. = ..()
-	var/datum/component/storage/STR = GetComponent(/datum/component/storage)
-	STR.allow_big_nesting = TRUE
-	STR.max_w_class = WEIGHT_CLASS_GIGANTIC
-	STR.max_combined_w_class = 1000
-	STR.max_items = 200
-	STR.allow_quick_gather = TRUE
-	STR.allow_quick_empty = TRUE
-	STR.display_numerical_stacking = TRUE
-	STR.click_gather = TRUE
+	create_storage(max_specific_storage = WEIGHT_CLASS_GIGANTIC, max_total_storage = 1000, max_slots = 200, storage_type = /datum/storage/bag_of_holding)
+	atom_storage.allow_big_nesting = TRUE
+	atom_storage.allow_quick_gather = TRUE
+	atom_storage.allow_quick_empty = TRUE
+	atom_storage.numerical_stacking = TRUE
 
 /obj/item/storage/backpack/santabag
 	name = "Santa's Gift Bag"
@@ -125,11 +112,10 @@
 	. = ..()
 	regenerate_presents()
 
-/obj/item/storage/backpack/santabag/ComponentInitialize()
+/obj/item/storage/backpack/santabag/Initialize(mapload)
 	. = ..()
-	var/datum/component/storage/STR = GetComponent(/datum/component/storage)
-	STR.max_w_class = WEIGHT_CLASS_NORMAL
-	STR.max_combined_w_class = 60
+	atom_storage.max_specific_storage = WEIGHT_CLASS_NORMAL
+	atom_storage.max_total_storage = 60
 
 /obj/item/storage/backpack/santabag/suicide_act(mob/living/user)
 	user.visible_message(span_suicide("[user] places [src] over [user.p_their()] head and pulls it tight! It looks like [user.p_they()] [user.p_are()]n't in the Christmas spirit..."))
@@ -138,17 +124,14 @@
 /obj/item/storage/backpack/santabag/proc/regenerate_presents()
 	addtimer(CALLBACK(src, PROC_REF(regenerate_presents)), 30 SECONDS)
 
-	var/mob/M = get(loc, /mob)
-	if(!istype(M))
+	var/mob/user = get(loc, /mob)
+	if(!istype(user))
 		return
-	if(M.mind && HAS_TRAIT(M.mind, TRAIT_CANNOT_OPEN_PRESENTS))
-		var/datum/component/storage/STR = GetComponent(/datum/component/storage)
+	if(HAS_MIND_TRAIT(user, TRAIT_CANNOT_OPEN_PRESENTS))
 		var/turf/floor = get_turf(src)
-		var/obj/item/I = new /obj/item/a_gift/anything(floor)
-		if(STR.can_be_inserted(I, stop_messages=TRUE))
-			STR.handle_item_insertion(I, prevent_warning=TRUE)
-		else
-			qdel(I)
+		var/obj/item/thing = new /obj/item/a_gift/anything(floor)
+		if(!atom_storage.attempt_insert(src, thing, user, override = TRUE))
+			qdel(thing)
 
 
 /obj/item/storage/backpack/cultpack
@@ -237,6 +220,12 @@
 	item_state = "securitypack"
 	resistance_flags = FIRE_PROOF
 
+/obj/item/storage/backpack/ert/Initialize(mapload)
+	. = ..()
+	atom_storage.max_slots = 30
+	atom_storage.max_specific_storage = WEIGHT_CLASS_HUGE
+	atom_storage.max_total_storage = 30
+
 /obj/item/storage/backpack/ert/security
 	name = "emergency response team security backpack"
 	desc = "A spacious backpack with lots of pockets, worn by Security Officers of an Emergency Response Team."
@@ -251,6 +240,68 @@
 	name = "emergency response team engineer backpack"
 	desc = "A spacious backpack with lots of pockets, worn by Engineers of an Emergency Response Team."
 	icon_state = "ert_engineering"
+
+/obj/item/storage/backpack/engineer_borg_bag
+	name = "engineering cyborg bag"
+	desc = "Store the tools to repair that breach in this cute borgiebag!"
+	icon_state = "engiborgpack"
+	resistance_flags = FIRE_PROOF
+	custom_premium_price = 300
+
+/obj/item/storage/backpack/mining_borg_bag
+	name = "mining cyborg bag"
+	desc = "Store the parts to repair your mechanical mining friends in this tough bag! Ash dust emanates from it constantly"
+	icon_state = "mineborgpack"
+	custom_premium_price = 300
+
+/obj/item/storage/backpack/janitor_borg_bag
+	name = "janitor cyborg bag"
+	desc = "Clean the halls in style with this adorable borgbag! It smells strongly of cleaning products."
+	icon_state = "janiborgpack"
+	custom_premium_price = 300
+
+/obj/item/storage/backpack/syndiassault_borg_bag
+	name = "suspicious assault cyborg bag"
+	desc = "Store the bullet to bring down the entirety of Nanotrasen with the comfort of a king in an adorable backpack! It gives off an odor of fresh blood and brass."
+	icon_state = "syndiassaultborgpack"
+	custom_premium_price = 350
+
+/obj/item/storage/backpack/syndimed_borg_bag
+	name = "suspicious medical cyborg bag"
+	desc = "Heal our brave operatives with medicines stored in an adorable bag! It gives off a scent of Omnizine."
+	icon_state = "syndimediborgpack"
+	custom_premium_price = 350
+
+/obj/item/storage/backpack/syndieng_borg_bag
+	name = "suspicious engineering cyborg bag"
+	desc = "Store the tools that will lead to the demise of Nanotrasen in an adorable bag! A smell of omnizine infuzed oil emanates from it."
+	icon_state = "syndiengiborgpack"
+	resistance_flags = FIRE_PROOF
+	custom_premium_price = 350
+
+/obj/item/storage/backpack/peace_borg_bag
+	name = "peace keeper cyborg bag"
+	desc = "Prevent !HUMAN HARM! in an adorable bag! It smells like pepper spray."
+	icon_state = "peaceborgpack"
+	custom_premium_price = 300
+
+/obj/item/storage/backpack/service_borg_bag
+	name = "service cyborg bag"
+	desc = "Serve the station in style with an adorable bag! It smells strongly of alcohol."
+	icon_state = "servborgpack"
+	custom_premium_price = 300
+
+/obj/item/storage/backpack/security_borg_bag
+	name = "security cyborg bag"
+	desc = "Keep the stations halls safe with a cute bag that scares the criminals away! It gives off a crackle of static occasionally"
+	icon_state = "secborgpack"
+	custom_premium_price = 300
+
+/obj/item/storage/backpack/medical_borg_bag
+	name = "medical cyborg bag"
+	desc = "Store the scalpel to safe the captains life in this sterile bag! It gives off a strong smell of antiseptic spray."
+	icon_state = "mediborgpack"
+	custom_premium_price = 300
 
 /////////////////
 //DONATOR ITEMS//
@@ -378,12 +429,8 @@
 /obj/item/storage/backpack/satchel/flat/Initialize(mapload)
 	. = ..()
 	AddElement(/datum/element/undertile, TRAIT_T_RAY_VISIBLE, INVISIBILITY_OBSERVER, use_anchor = TRUE)
-
-/obj/item/storage/backpack/satchel/flat/ComponentInitialize()
-	. = ..()
-	var/datum/component/storage/STR = GetComponent(/datum/component/storage)
-	STR.max_combined_w_class = 15
-	STR.set_holdable(null, list(/obj/item/storage/backpack/satchel/flat)) //muh recursive backpacks
+	atom_storage.max_total_storage = 15
+	atom_storage.set_holdable(cant_hold_list = list(/obj/item/storage/backpack/satchel/flat)) //muh recursive backpacks)
 
 /obj/item/storage/backpack/satchel/flat/PopulateContents()
 	var/datum/supply_pack/costumes_toys/randomised/contraband/C = new
@@ -422,20 +469,17 @@
 	item_state = "mailbag"
 	slot_flags = ITEM_SLOT_BACK|ITEM_SLOT_BELT
 
-/obj/item/storage/backpack/satchel/mail/ComponentInitialize()
+/obj/item/storage/backpack/satchel/mail/Initialize(mapload)
 	. = ..()
-	var/datum/component/storage/STR = GetComponent(/datum/component/storage)
-	STR.allow_quick_gather = TRUE
-	STR.allow_quick_empty = TRUE
-	STR.display_numerical_stacking = TRUE
-	STR.click_gather = TRUE
-	STR.max_w_class = WEIGHT_CLASS_NORMAL
-	STR.max_combined_w_class = 32
-	STR.max_items = 32
-	STR.display_numerical_stacking = FALSE
-	STR.set_holdable(list(
+	atom_storage.allow_quick_gather = TRUE
+	atom_storage.allow_quick_empty = TRUE
+	atom_storage.numerical_stacking = TRUE
+	atom_storage.max_specific_storage = WEIGHT_CLASS_NORMAL
+	atom_storage.max_total_storage = 32
+	atom_storage.max_slots = 32
+	atom_storage.set_holdable(list(
 		/obj/item/mail,
-		/obj/item/small_delivery,
+		/obj/item/delivery/small,
 		/obj/item/paper,
 		/obj/item/reagent_containers/condiment/milk,
 		/obj/item/food/bread/plain
@@ -450,10 +494,9 @@
 	item_state = "duffel"
 	slowdown = 1
 
-/obj/item/storage/backpack/duffelbag/ComponentInitialize()
+/obj/item/storage/backpack/duffelbag/Initialize(mapload)
 	. = ..()
-	var/datum/component/storage/STR = GetComponent(/datum/component/storage)
-	STR.max_combined_w_class = 40
+	atom_storage.max_total_storage = 40
 
 /obj/item/storage/backpack/duffelbag/captain
 	name = "captain's duffel bag"
@@ -522,6 +565,23 @@
 	new /obj/item/reagent_containers/medspray/sterilizine(src)
 	new /obj/item/blood_filter(src)
 
+/obj/item/storage/backpack/duffelbag/sec/detective
+	name = "detective equipment duffel bag"
+	desc = "The necessary equipment for any detective!"
+
+/obj/item/storage/backpack/duffelbag/sec/detective/PopulateContents()
+	new /obj/item/camera/detective(src)
+	new /obj/item/taperecorder(src)
+	new /obj/item/pinpointer/crew(src)
+	new /obj/item/binoculars(src)
+	new /obj/item/detective_scanner(src)
+	new /obj/item/flashlight/seclite(src)
+	new /obj/item/holosign_creator/security(src)
+	new /obj/item/reagent_containers/peppercloud_deployer(src)
+	new /obj/item/clothing/neck/tie/detective(src)
+	new /obj/item/storage/box/evidence(src)
+	new /obj/item/storage/box/rxglasses/spyglasskit(src)
+
 /obj/item/storage/backpack/duffelbag/sec/deputy
 	name = "deputy gear duffel bag"
 	desc = "A large duffel bag for holding extra supplies - this one has compartments for various clothes and gear."
@@ -531,10 +591,12 @@
 	new /obj/item/clothing/head/soft/sec(src)
 	new /obj/item/radio/headset/headset_sec(src)
 	new /obj/item/clothing/glasses/hud/security/deputy(src)
-	new /obj/item/clothing/under/rank/security/officer/mallcop(src)
+	new /obj/item/clothing/under/rank/security/officer/blueshirt(src)
 	new /obj/item/clothing/shoes/sneakers/black(src)
 	new /obj/item/storage/belt/security/deputy(src)
 	new /obj/item/clothing/accessory/armband/deputy(src)
+	new /obj/item/card/id/pass/deputy(src)
+	new /obj/item/ammo_casing/taser(src)
 
 /obj/item/storage/backpack/duffelbag/engineering
 	name = "industrial duffel bag"
@@ -587,10 +649,9 @@
 	slowdown = 0
 	resistance_flags = FIRE_PROOF
 
-/obj/item/storage/backpack/duffelbag/syndie/ComponentInitialize()
+/obj/item/storage/backpack/duffelbag/syndie/Initialize(mapload)
 	. = ..()
-	var/datum/component/storage/STR = GetComponent(/datum/component/storage)
-	STR.silent = TRUE
+	atom_storage.silent = TRUE
 
 /obj/item/storage/backpack/duffelbag/syndie/hitman
 	desc = "A large duffel bag for holding extra things. There is a Nanotrasen logo on the back."
@@ -744,7 +805,7 @@
 	new /obj/item/flamethrower/full/tank(src)
 	new /obj/item/tank/internals/plasma(src)
 	new /obj/item/tank/internals/plasma(src)
-	new /obj/item/clothing/suit/space/hardsuit/syndi/elite(src)
+	new /obj/item/mod/control/pre_equipped/elite/flamethrower(src)
 	new /obj/item/gun/ballistic/automatic/pistol/APS(src)
 	new /obj/item/ammo_box/magazine/pistolm9mm(src)
 	new /obj/item/ammo_box/magazine/pistolm9mm(src)
@@ -753,14 +814,13 @@
 	new /obj/item/storage/firstaid/tactical(src)
 
 // For ClownOps.
-/obj/item/storage/backpack/duffelbag/clown/syndie/ComponentInitialize()
+/obj/item/storage/backpack/duffelbag/clown/syndie/Initialize(mapload)
 	. = ..()
-	var/datum/component/storage/STR = GetComponent(/datum/component/storage)
 	slowdown = 0
-	STR.silent = TRUE
+	atom_storage.silent = TRUE
 
 /obj/item/storage/backpack/duffelbag/clown/syndie/PopulateContents()
-	new /obj/item/modular_computer/tablet/pda/clown(src)
+	new /obj/item/modular_computer/tablet/pda/preset/clown(src)
 	new /obj/item/clothing/under/rank/civilian/clown(src)
 	new /obj/item/clothing/shoes/clown_shoes(src)
 	new /obj/item/clothing/mask/gas/clown_hat(src)

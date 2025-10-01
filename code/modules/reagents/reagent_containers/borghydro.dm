@@ -18,7 +18,7 @@ Borg Hypospray
 	icon_state = "borghypo"
 	amount_per_transfer_from_this = 5
 	volume = 30
-	possible_transfer_amounts = list()
+	possible_transfer_amounts = list(5)
 	var/mode = 1
 	var/charge_cost = 50
 	var/charge_timer = 0
@@ -102,7 +102,7 @@ Borg Hypospray
 		return
 	if(!istype(M))
 		return
-	if(R.total_volume && M.can_inject(user, 1, user.get_combat_bodyzone(M, zone_context = BODYZONE_CONTEXT_INJECTION), bypass_protection))
+	if(R.total_volume && M.try_inject(user, user.get_combat_bodyzone(M, zone_context = BODYZONE_CONTEXT_INJECTION), injection_flags = INJECT_TRY_SHOW_ERROR_MESSAGE | (bypass_protection ? INJECT_CHECK_PENETRATE_THICK : 0)))
 		to_chat(M, span_warning("You feel a tiny prick!"))
 		to_chat(user, span_notice("You inject [M] with the injector."))
 		var/fraction = min(amount_per_transfer_from_this/R.total_volume, 1)
@@ -176,7 +176,7 @@ Borg Shaker
 /obj/item/reagent_containers/borghypo/borgshaker
 	name = "cyborg shaker"
 	desc = "An advanced drink synthesizer and mixer."
-	icon = 'icons/obj/drinks.dmi'
+	icon = 'icons/obj/drinks/bottles.dmi'
 	icon_state = "shaker"
 	possible_transfer_amounts = list(5,10,20)
 	charge_cost = 20 //Lots of reagents all regenerating at once, so the charge cost is lower. They also regenerate faster.
@@ -266,7 +266,7 @@ Borg Shaker
 /obj/item/reagent_containers/borghypo/borgshaker/hacked
 	name = "cyborg shaker"
 	desc = "Will mix drinks that knock them dead."
-	icon = 'icons/obj/drinks.dmi'
+	icon = 'icons/obj/drinks/mixed_drinks.dmi'
 	icon_state = "threemileislandglass"
 	possible_transfer_amounts = list(5,10,20)
 	charge_cost = 20 //Lots of reagents all regenerating at once, so the charge cost is lower. They also regenerate faster.

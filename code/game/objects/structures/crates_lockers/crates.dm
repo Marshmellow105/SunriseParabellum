@@ -24,6 +24,9 @@
 	close_sound_volume = 50
 	drag_slowdown = 0
 	imacrate = TRUE
+	breakout_time = 20 SECONDS
+	var/mob/living/resident //The vampire owner of this crate (or coffin)
+	var/pry_lid_timer = 25 SECONDS //The time it takes to pry this open with a crowbar
 	var/crate_climb_time = 20
 	var/azimuth_angle_2 = 180 //in this context the azimuth angle for over 90 degree
 	var/radius_2 = 1.35
@@ -51,7 +54,7 @@
 			if(!locatedcrate.opened) //otherwise, if the located crate is closed, allow entering
 				return TRUE
 
-/obj/structure/closet/crate/animate_door(var/closing = FALSE)
+/obj/structure/closet/crate/animate_door(closing = FALSE)
 	if(!door_anim_time)
 		return
 	if(!door_obj) door_obj = new
@@ -100,7 +103,7 @@
 		new_animation_math_sublist[num_steps_1 + I] = cos(azimuth_angle) * sin(polar_angle) * radius_cr
 	animation_math["[door_anim_time]-[door_anim_angle]-[azimuth_angle_2]-[radius_2]-[door_hinge]"] = new_animation_math_sublist
 
-/obj/structure/closet/crate/attack_hand(mob/user)
+/obj/structure/closet/crate/attack_hand(mob/user, list/modifiers)
 	if(istype(src.loc, /obj/structure/crate_shelf))
 		return FALSE // No opening crates in shelves!!
 	if(manifest)
@@ -152,23 +155,6 @@
 		user.put_in_hands(manifest)
 	manifest = null
 	update_icon()
-
-/obj/structure/closet/crate/coffin
-	name = "coffin"
-	desc = "It's a burial receptacle for the dearly departed."
-	icon_state = "coffin"
-	resistance_flags = FLAMMABLE
-	max_integrity = 70
-	material_drop = /obj/item/stack/sheet/wood
-	material_drop_amount = 5
-	open_sound = 'sound/machines/wooden_closet_open.ogg'
-	close_sound = 'sound/machines/wooden_closet_close.ogg'
-	open_sound_volume = 25
-	close_sound_volume = 50
-	door_anim_angle = 140
-	azimuth_angle_2 = 180
-	door_anim_time = 5
-	door_hinge = 5
 
 /obj/structure/closet/crate/internals
 	desc = "An internals crate."
@@ -276,6 +262,22 @@
 	name = "science crate"
 	desc = "A science crate."
 	icon_state = "sci_crate"
+
+/obj/structure/closet/crate/science/debug
+	name = "science crate"
+	desc = "debug cyborg modules."
+	icon_state = "sci_crate"
+
+/obj/structure/closet/crate/science/debug/obj/structure/closet/crate/science/debug/PopulateContents()
+	..()
+	new /obj/item/robot_model/standard(src)
+	new /obj/item/robot_model/peacekeeper(src)
+	new /obj/item/robot_model/miner(src)
+	new /obj/item/robot_model/medical(src)
+	new /obj/item/robot_model/janitor(src)
+	new /obj/item/robot_model/engineering(src)
+	new /obj/item/robot_model/clown(src)
+	new /obj/item/robot_model/service(src)
 
 /obj/structure/closet/crate/solarpanel_small
 	name = "budget solar panel crate"

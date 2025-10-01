@@ -6,7 +6,7 @@
 	var/fire_sound
 	var/projectiles_per_shot = 1
 	var/variance = 0
-	var/randomspread = FALSE //use random spread for machineguns, instead of shotgun scatter
+	var/even_distribution = FALSE
 	var/projectile_delay = 0
 	var/firing_effect_type = /obj/effect/temp_visual/dir_setting/firing_effect	//the visual effect appearing when the weapon is fired.
 	var/kickback = TRUE //Will using this weapon in no grav push mecha back.
@@ -21,7 +21,7 @@
 		return TRUE
 	return FALSE
 
-/obj/item/mecha_parts/mecha_equipment/weapon/action(mob/source, atom/target, params)
+/obj/item/mecha_parts/mecha_equipment/weapon/action(mob/source, atom/target, list/modifiers)
 	if(!action_checks(target))
 		return FALSE
 	var/newtonian_target = turn(chassis.dir,180)
@@ -31,17 +31,18 @@
 			break
 		var/spread = 0
 		if(variance)
-			if(randomspread)
+			if(!even_distribution)
 				spread = round((rand() - 0.5) * variance)
 			else
 				spread = round((i / projectiles_per_shot - 0.5) * variance)
 
-		var/obj/projectile/A = new projectile(get_turf(src))
-		A.firer = chassis
-		A.preparePixelProjectile(target, source, params, spread)
+		var/obj/projectile/projectile_obj = new projectile(get_turf(src))
+		projectile_obj.firer = chassis
+		projectile_obj.fired_from = src
+		projectile_obj.preparePixelProjectile(target, source, modifiers, spread)
 
-		A.fire()
-		if(!A.suppressed && firing_effect_type)
+		projectile_obj.fire()
+		if(!projectile_obj.suppressed && firing_effect_type)
 			new firing_effect_type(get_turf(src), chassis.dir)
 		playsound(chassis, fire_sound, 50, TRUE)
 
@@ -186,7 +187,7 @@
 		return FALSE
 
 
-/obj/item/mecha_parts/mecha_equipment/weapon/honker/action(mob/source, atom/target, params)
+/obj/item/mecha_parts/mecha_equipment/weapon/honker/action(mob/source, atom/target, list/modifiers)
 	if(!action_checks(target))
 		return
 	playsound(chassis, 'sound/items/airhorn.ogg', 100, 1)
@@ -236,7 +237,7 @@
 	return TRUE
 
 /obj/item/mecha_parts/mecha_equipment/weapon/ballistic/get_equip_info()
-	return "[..()] \[[projectiles][projectiles_cache_max &&!projectile_energy_cost?"/[projectiles_cache]":""]\][!disabledreload &&(src.projectiles < initial(src.projectiles))?" - <a href='?src=[REF(src)];rearm=1'>Rearm</a>":null]"
+	return "[..()] \[[projectiles][projectiles_cache_max &&!projectile_energy_cost?"/[projectiles_cache]":""]\][!disabledreload &&(src.projectiles < initial(src.projectiles))?" - <a href='byond://?src=[REF(src)];rearm=1'>Rearm</a>":null]"
 
 
 /obj/item/mecha_parts/mecha_equipment/weapon/ballistic/rearm()
@@ -274,7 +275,7 @@
 	if (href_list["rearm"])
 		rearm()
 
-/obj/item/mecha_parts/mecha_equipment/weapon/ballistic/action(mob/source, atom/target, params)
+/obj/item/mecha_parts/mecha_equipment/weapon/ballistic/action(mob/source, atom/target, list/modifiers)
 	if(..())
 		projectiles -= projectiles_per_shot
 		send_byjax(chassis.occupants,"exosuit.browser","[REF(src)]",src.get_equip_info())
@@ -316,6 +317,7 @@
 	projectiles_per_shot = 4
 	variance = 25
 	harmful = TRUE
+	even_distribution = TRUE
 	ammo_type = "scattershot"
 
 /obj/item/mecha_parts/mecha_equipment/weapon/ballistic/lmg
@@ -329,7 +331,6 @@
 	projectiles_cache_max = 1200
 	projectiles_per_shot = 3
 	variance = 6
-	randomspread = 1
 	projectile_delay = 2
 	harmful = TRUE
 	ammo_type = "lmg"
@@ -368,7 +369,7 @@
 	var/missile_range = 30
 	var/diags_first = FALSE
 
-/obj/item/mecha_parts/mecha_equipment/weapon/ballistic/launcher/action(mob/source, atom/target, params)
+/obj/item/mecha_parts/mecha_equipment/weapon/ballistic/launcher/action(mob/source, atom/target, list/modifiers)
 	if(!action_checks(target))
 		return
 	var/obj/O = new projectile(chassis.loc)
@@ -380,7 +381,7 @@
 	return TRUE
 
 //used for projectile initilisation (priming flashbang) and additional logging
-/obj/item/mecha_parts/mecha_equipment/weapon/ballistic/launcher/proc/proj_init(var/obj/O, mob/user)
+/obj/item/mecha_parts/mecha_equipment/weapon/ballistic/launcher/proc/proj_init(obj/O, mob/user)
 	return
 
 
@@ -451,7 +452,7 @@
 			return 1
 	return 0
 
-/obj/item/mecha_parts/mecha_equipment/weapon/ballistic/launcher/mousetrap_mortar/proj_init(var/obj/item/assembly/mousetrap/armed/M)
+/obj/item/mecha_parts/mecha_equipment/weapon/ballistic/launcher/mousetrap_mortar/proj_init(obj/item/assembly/mousetrap/armed/M)
 	M.secured = 1
 
 
@@ -477,7 +478,7 @@
 			return 1
 	return 0
 
-/obj/item/mecha_parts/mecha_equipment/weapon/ballistic/launcher/punching_glove/action(target)
+/obj/item/mecha_parts/mecha_equipment/weapon/ballistic/launcher/punching_glove/action(mob/source, atom/target, list/modifiers)
 	. = ..()
 	if(.)
 		to_chat(usr, "[icon2html(src, usr)]<font color='red' size='5'>HONK</font>")

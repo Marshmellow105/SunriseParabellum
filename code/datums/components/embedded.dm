@@ -89,7 +89,7 @@
 
 	limb.embedded_objects |= weapon // on the inside... on the inside...
 	weapon.forceMove(victim)
-	RegisterSignals(weapon, list(COMSIG_MOVABLE_MOVED, COMSIG_PARENT_QDELETING), PROC_REF(weaponDeleted))
+	RegisterSignals(weapon, list(COMSIG_MOVABLE_MOVED, COMSIG_QDELETING), PROC_REF(weaponDeleted))
 	victim.visible_message(span_danger("[weapon] [harmful ? "embeds" : "sticks"] itself [harmful ? "in" : "to"] [victim]'s [limb.name]!"), span_userdanger("[weapon] [harmful ? "embeds" : "sticks"] itself [harmful ? "in" : "to"] your [limb.name]!"))
 
 	if(harmful)
@@ -104,7 +104,7 @@
 		victim.clear_alert("embeddedobject")
 		SEND_SIGNAL(victim, COMSIG_CLEAR_MOOD_EVENT, "embedded")
 	if(weapon)
-		UnregisterSignal(weapon, list(COMSIG_MOVABLE_MOVED, COMSIG_PARENT_QDELETING))
+		UnregisterSignal(weapon, list(COMSIG_MOVABLE_MOVED, COMSIG_QDELETING))
 	weapon = null
 	limb = null
 	return ..()
@@ -113,11 +113,11 @@
 	RegisterSignal(parent, COMSIG_MOVABLE_MOVED, PROC_REF(jostleCheck))
 	RegisterSignal(parent, COMSIG_CARBON_EMBED_RIP, PROC_REF(ripOut))
 	RegisterSignal(parent, COMSIG_CARBON_EMBED_REMOVAL, PROC_REF(safeRemove))
-	RegisterSignal(parent, COMSIG_PARENT_ATTACKBY, PROC_REF(checkRemoval))
+	RegisterSignal(parent, COMSIG_ATOM_ATTACKBY, PROC_REF(checkRemoval))
 	RegisterSignal(parent, COMSIG_ATOM_ATTACK_HAND, PROC_REF(tryPullOutOther))
 
 /datum/component/embedded/UnregisterFromParent()
-	UnregisterSignal(parent, list(COMSIG_MOVABLE_MOVED, COMSIG_CARBON_EMBED_RIP, COMSIG_CARBON_EMBED_REMOVAL, COMSIG_PARENT_ATTACKBY, COMSIG_ATOM_ATTACK_HAND))
+	UnregisterSignal(parent, list(COMSIG_MOVABLE_MOVED, COMSIG_CARBON_EMBED_RIP, COMSIG_CARBON_EMBED_REMOVAL, COMSIG_ATOM_ATTACKBY, COMSIG_ATOM_ATTACK_HAND))
 
 /datum/component/embedded/process(delta_time)
 	var/mob/living/carbon/victim = parent
@@ -220,10 +220,10 @@
 
 	var/mob/living/carbon/victim = parent
 	limb.embedded_objects -= weapon
-	UnregisterSignal(weapon, list(COMSIG_MOVABLE_MOVED, COMSIG_PARENT_QDELETING)) // have to do it here otherwise we trigger weaponDeleted()
+	UnregisterSignal(weapon, list(COMSIG_MOVABLE_MOVED, COMSIG_QDELETING)) // have to do it here otherwise we trigger weaponDeleted()
 
 	if(!weapon.unembedded()) // if it hasn't deleted itself due to drop del
-		UnregisterSignal(weapon, list(COMSIG_MOVABLE_MOVED, COMSIG_PARENT_QDELETING))
+		UnregisterSignal(weapon, list(COMSIG_MOVABLE_MOVED, COMSIG_QDELETING))
 		//If a mob was passed in and it can hold items, put it in the mob's hand.
 		if(istype(to_hands) && to_hands.can_hold_items())
 			INVOKE_ASYNC(to_hands, TYPE_PROC_REF(/mob, put_in_hands), weapon)
@@ -237,13 +237,13 @@
 /datum/component/embedded/proc/tryPullOutOther(mob/living/carbon/victim, mob/user)
 	SIGNAL_HANDLER
 
-	if(!user.IsAdvancedToolUser())
+	if(!ISADVANCEDTOOLUSER(user))
 		to_chat(user, span_warning("You don't have the dexterity to do this!"))
 		return
 
 	if(ishuman(victim)) // check to see if the limb is actually exposed
 		var/mob/living/carbon/human/victim_human = victim
-		if(!victim_human.can_inject(user, TRUE, limb.body_zone, penetrate_thick = FALSE))
+		if(!victim_human.try_inject(user, limb.body_zone, INJECT_CHECK_IGNORE_SPECIES | INJECT_TRY_SHOW_ERROR_MESSAGE))
 			return TRUE
 
 	if(weapon.w_class <= WEIGHT_CLASS_SMALL)
@@ -253,10 +253,10 @@
 	INVOKE_ASYNC(src, PROC_REF(pluckOut), user, 1, 2, "pulling out")
 	return COMPONENT_CANCEL_ATTACK_CHAIN
 
-/datum/component/embedded/proc/checkRemoval(mob/living/carbon/victim, obj/item/I, mob/user)
+/datum/component/embedded/proc/checkRemoval(mob/living/carbon/victim, obj/item/I, mob/living/user)
 	SIGNAL_HANDLER
 
-	if(!istype(victim) || user.is_zone_selected(limb.body_zone) || user.a_intent != INTENT_HELP)
+	if(!istype(victim) || user.is_zone_selected(limb.body_zone) || user.combat_mode)
 		return
 
 	var/damage_multiplier = 1
@@ -282,7 +282,7 @@
 
 	if(ishuman(victim)) // check to see if the limb is actually exposed
 		var/mob/living/carbon/human/victim_human = victim
-		if(!victim_human.can_inject(user, TRUE, limb.body_zone, penetrate_thick = FALSE))
+		if(!victim_human.try_inject(user, limb.body_zone, INJECT_CHECK_IGNORE_SPECIES | INJECT_TRY_SHOW_ERROR_MESSAGE))
 			return TRUE
 
 	INVOKE_ASYNC(src, PROC_REF(pluckOut), user, damage_multiplier, max(damage_multiplier, 0.2), remove_verb)
